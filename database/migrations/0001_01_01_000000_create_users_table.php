@@ -20,9 +20,12 @@ return new class extends Migration
             $table->rememberToken();
 
             $table->int('counter');
+            $table->boolean('alive');
             $table->string('direction',length:20);
             $table->int('length');
             $table->int('wins');
+            $table->int('totalWins');
+            $table->int('totalLosses');
 
             $table->timestamps();
         });
