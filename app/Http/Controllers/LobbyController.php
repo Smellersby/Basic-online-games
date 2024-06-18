@@ -40,9 +40,18 @@ class LobbyController extends Controller
      */
     public function show(string $id)
     {
+        
         $lobby = lobbies::find($id);
         $user = User::all();
         $fields = fields::all();
+        if (auth()) {
+            if($lobby->playerOne==NULL){
+                $lobby->playerOne=auth()->id();
+            }else if($lobby->playerTwo==NULL){
+                $lobby->playerTwo=auth()->id();
+            }
+            $lobby->save();
+        }
         if($lobby->gameType=="tic-tac-toe"){
             return view('lobbies.ticTacToe', compact('lobby','user','fields'));
         }else if($lobby->gameType=="snake"){

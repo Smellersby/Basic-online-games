@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Vadim',
             'email' => 'vadim@inbox.lv',
-            'password'=>'vadim'
+            'password'=>'vadim228'
         ]);
 
         lobbies::create([
@@ -65,6 +65,26 @@ class DatabaseSeeder extends Seeder
             for($x=0;$x<3;$x++){
                 fields::create([
                     'lobbyID' => 1,
+                    'x' => $x,
+                    'y' => $y,
+                    'cellState' => "empty",
+                ]);
+            }
+        }
+        for($y=0;$y<3;$y++){
+            for($x=0;$x<3;$x++){
+                fields::create([
+                    'lobbyID' => 2,
+                    'x' => $x,
+                    'y' => $y,
+                    'cellState' => "empty",
+                ]);
+            }
+        }
+        for($y=0;$y<3;$y++){
+            for($x=0;$x<3;$x++){
+                fields::create([
+                    'lobbyID' => 3,
                     'x' => $x,
                     'y' => $y,
                     'cellState' => "empty",

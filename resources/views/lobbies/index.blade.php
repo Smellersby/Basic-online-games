@@ -82,7 +82,15 @@
                     @endif
                 </td>
                 <td><!--buttons-->
-                    <button>spectate</button>
+                    @if ($lobby->playerTwo!=NULL && $lobby->playerTwo!=NULL)
+                    <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
+                        @csrf
+                        @method('GET')
+                        <button type="submit">spectate</button>
+                    </form>
+                    @endif
+                    
+                    @auth
                     @if ($lobby->playerTwo==NULL || $lobby->playerTwo==NULL)
                         <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
                             @csrf
@@ -90,6 +98,7 @@
                             <button type="submit">join</button>
                         </form>
                     @endif
+                    @endauth
                     @if ($lobby->creator==Auth::id())
                         <form method="POST" action="{{ route('lobbies.destroy', $lobby->id) }}">
                             @csrf
