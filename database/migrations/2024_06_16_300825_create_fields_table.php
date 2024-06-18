@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('fields', function (Blueprint $table) {
-            $table->foreignId('lobbyID')->constrained()->onDelete('cascade');
-            $table->int('x');
-            $table->int('y');
-            $table->int('cellState');
+            $table->foreignId('lobbyID')->constrained('lobbies')->onDelete('cascade');
+            $table->integer('x');
+            $table->integer('y');
+            $table->string('cellState')->default("empty");
             $table->timestamps();
         });
     }

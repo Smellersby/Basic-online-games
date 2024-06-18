@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('lobbies', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('playerOne')->constrained()->onDelete('cascade');
-            $table->foreignId('playerTwo')->constrained()->onDelete('cascade');
+            $table->string('name',length:50);
+            $table->foreignId('creator')->constrained('users')->onDelete('cascade');
+            $table->foreignId('playerOne')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('playerTwo')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('gameType',length:35);
             $table->string('turn',length:35);
             $table->string('speed',length:45);

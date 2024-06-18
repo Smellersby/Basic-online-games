@@ -19,13 +19,13 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
 
-            $table->int('counter');
-            $table->boolean('alive');
-            $table->string('direction',length:20);
-            $table->int('length');
-            $table->int('wins');
-            $table->int('totalWins');
-            $table->int('totalLosses');
+            $table->integer('counter')->default(0);
+            $table->boolean('alive')->default(false);
+            $table->string('direction',length:20)->default("");
+            $table->integer('length')->default(0);
+            $table->integer('wins')->default(0);
+            $table->integer('totalWins')->default(0);
+            $table->integer('totalLosses')->default(0);
 
             $table->timestamps();
         });
