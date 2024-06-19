@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
 
-            $table->integer('counter')->default(0);
+            $table->string('status', length:30)->default("not in game");
             $table->boolean('alive')->default(false);
             $table->string('direction',length:20)->default("");
             $table->integer('length')->default(0);

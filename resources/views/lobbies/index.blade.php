@@ -72,17 +72,17 @@
                 <td>{{$lobby->gameType}}</td>
                 <td>{{$users[$lobby->creator-1]->name }}</td>
                 <td>
-                    @if ($lobby->playerOne-1>=0)
+                    @if ($lobby->playerOne!=null)
                     {{$users[$lobby->playerOne-1]->name}}
                     @endif
                 </td>
                 <td>
-                    @if ($lobby->playerTwo-1>=0)
+                    @if ($lobby->playerTwo!=null)
                     {{$users[$lobby->playerTwo-1]->name}}
                     @endif
                 </td>
                 <td><!--buttons-->
-                    @if ($lobby->playerTwo!=NULL && $lobby->playerTwo!=NULL)
+                    @if ($lobby->playerOne!=NULL && $lobby->playerTwo!=NULL)
                     <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
                         @csrf
                         @method('GET')
@@ -91,7 +91,7 @@
                     @endif
                     
                     @auth
-                    @if ($lobby->playerTwo==NULL || $lobby->playerTwo==NULL)
+                    @if ($lobby->playerOne==NULL || $lobby->playerTwo==NULL)
                         <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
                             @csrf
                             @method('GET')

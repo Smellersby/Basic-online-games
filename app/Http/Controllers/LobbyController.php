@@ -14,19 +14,47 @@ class LobbyController extends Controller
         $playerOne = User::find($lobby->playerOne);
         $playerTwo = User::find($lobby->playerTwo);
         $fields = fields::where('lobbyID', $lobby->id)->get();
-        
+
         $response = [
             'lobby' => $lobby,
             'playerOne' => $playerOne,
             'playerTwo' => $playerTwo,
             'fields' => $fields
         ];
+        
+        $currentUser=User::find(auth()->id());
+        if ($currentUser) {
+            if($currentUser->id==$playerOne->id||$currentUser->id==$playerTwo->id){
+                $currentUser->status="in game";
+                $currentUser->save();
+            }
+        }
         return response()->json($response);
+    }
+    public function updateGameInfo(Request $request){
+        $theField= fields::where('lobbyID', $request->input('lobbyID'))
+                  ->where('x', $request->input('x'))
+                  ->where('y', $request->input('y'))
+                  ->first();
+        if($theField){
+            $lobby=lobbies::find($request->input('lobbyID'));
+            if($lobby->turn==1){
+                $lobby->turn=2;
+            }else{
+                $lobby->turn=1;
+            }
+            $theField->cellState=$request->input('sign');
+            $theField->save();
+            $lobby->save();
+            return response()->json(['success' => true,'theField'=>$theField]);
+        }
+        return response()->json(['success' => false, 'message' => 'field not found'], 404);
     }
     public function playerLeave(Request $request){
         $lobby = lobbies::find($request->input('lobby_id'));
         if ($lobby) {
-            $player= auth()->id(); // either 'playerOne' or 'playerTwo'
+            $player= auth()->id(); 
+            User::find($player)->status="not in game";
             if($lobby->playerOne==$player){
                 $lobby->playerOne=null;
             }else if($lobby->playerTwo==$player){
@@ -37,6 +65,7 @@ class LobbyController extends Controller
         }
         return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
     }
+    
     /**
      * Display a listing of the resource.
      */

@@ -1,14 +1,16 @@
 <?php
-
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LobbyController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 
 Route::redirect('/', '/lobbies');
 Route::resource('lobbies', LobbyController::class);
-
-Route::post('/lobbies/player-leave', [LobbyController::class, 'playerLeave'])->name('lobbies.playerLeave');
 Route::post('/lobbies/getGameInfo', [LobbyController::class, 'getGameInfo'])->name('lobbies.getGameInfo');
+Route::post('/lobbies/playerLeave', [LobbyController::class, 'playerLeave'])->name('lobbies.playerLeave');
+Route::post('/lobbies/updateGameInfo', [LobbyController::class, 'updateGameInfo'])->name('lobbies.updateGameInfo');
+
+URL::forceScheme('https');
 
 Route::get('/dashboard', function () {
     return view('dashboard');

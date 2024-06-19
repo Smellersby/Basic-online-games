@@ -84,15 +84,15 @@
         @endif
         <h1>Tic-Tac-Toe</h1>
         <div class="gridContainer">
-            <div class="box" id="box1"></div>
-            <div class="box" id="box2"></div>
-            <div class="box" id="box3"></div>
-            <div class="box" id="box4"></div>
-            <div class="box" id="box5"></div>
-            <div class="box" id="box6"></div>
-            <div class="box" id="box7"></div>
-            <div class="box" id="box8"></div>
-            <div class="box" id="box9"></div>
+            <div class="box" id="00"></div>
+            <div class="box" id="10"></div>
+            <div class="box" id="20"></div>
+            <div class="box" id="01"></div>
+            <div class="box" id="11"></div>
+            <div class="box" id="21"></div>
+            <div class="box" id="02"></div>
+            <div class="box" id="12"></div>
+            <div class="box" id="22"></div>
         </div>
         <h2 id="turnIndicator">
             @if($lobby->turn==1)
@@ -115,7 +115,7 @@
         let verticalVictory=0
         let diagonalVictory=0
         let lastSign=0
-        let lockPlayer=0
+        let lockPlayer=1
 
 
         function getGameInfo(){
@@ -124,20 +124,47 @@
                     type: 'POST',
                     dataType: 'json',
                     data: {
-                    _token: '{{ csrf_token() }}', // Include CSRF token
+                    _token: '{{ csrf_token() }}', 
                     lobby_id: lobbyId={{$lobby->id}}
                     },
                     success: function(response) {
-                        console.log(response)
+                        let j=0;
+                        for(let x=0;x<3;x++){
+                            for(let y=0;y<3;y++){
+                                gameBoxes[x][y].innerHTML=response.fields[j].cellState
+                                j++;
+                            }
+                        }
+                        //console.log(response)
+                        //console.log("turn check"," player ",response.lobby.turn," turns. player1: ",response.playerOne.id," player2: ",response.playerTwo.id," me: ",{{Auth::id()}})
+                        
+                        @auth
+                        if({{Auth::id()}}){
+                            if(response.lobby.turn==1 && response.playerTwo.id=={{Auth::id()}}){
+                                lockPlayer=1;
+                                turnIndicator.innerHTML=response.playerOne.name+" turns"
+                            }else if(response.lobby.turn==2 && response.playerOne.id=={{Auth::id()}}){
+                                lockPlayer=1;
+                                turnIndicator.innerHTML=response.playerTwo.name+" turns"
+                            }else if(response.lobby.turn==1 && response.playerOne.id=={{Auth::id()}}){
+                                lockPlayer=0;
+                                turnIndicator.innerHTML=response.playerOne.name+" turns"
+                            }else if(response.lobby.turn==2 && response.playerTwo.id=={{Auth::id()}}){
+                                lockPlayer=0;
+                                turnIndicator.innerHTML=response.playerTwo.name+" turns"
+                            }
+                        }
+                        victoryCheck();
+                        @endauth
                     },
                     error: function(xhr, status, error) {
-                        console.log("shit");
+                        console.log("bad get");
                     }
                 });
         }
         $(document).ready(function() {
             getGameInfo();
-            setInterval(getGameInfo, 5000);
+            setInterval(getGameInfo, 1200);
         });
 
         function exit(){
@@ -145,56 +172,60 @@
                 url: '{{ route('lobbies.playerLeave') }}',
                 type: 'POST',
                 data: {
-                    _token: '{{ csrf_token() }}', // Include CSRF token
+                    _token: '{{ csrf_token() }}', 
                     lobby_id: lobbyId={{$lobby->id}}
                 },
                 success: function(response) {
-                    if (response.success) {
-                        console.log('Player has left the lobby successfully');
-                        window.location.href = '/lobbies'; // Redirect to /lobbies
-                    } else {
-                        console.log('Error:', response.message);
-                    }
+                    window.location.href = '/lobbies'; 
                 }
             });
         }
-        window.addEventListener('beforeunload', function (e) {
-            exit();
-        });
-        window.addEventListener('popstate', function (event) {
-            console.log("detected");
-        });
+        //window.addEventListener('beforeunload', exit);
 
+        function updateGameInfo(changedBox){
+            $.ajax({
+                url: '{{ route('lobbies.updateGameInfo') }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    lobbyID: {{$lobby->id}},
+                    x: changedBox.id[0],
+                    y: changedBox.id[1],
+                    sign: changedBox.innerHTML
+                },
+                success: function(response) {
+                    if (response.success) {
+                        console.log('good update',response); 
+                    } else {
+                        console.log('update error:', response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('Request failed:', error);
+                }
+            });
+        }
         function changeCondition(){
             if(lockPlayer==0){
                 if(turn==1&&!this.innerHTML){
-                this.innerHTML="X"
-                this.style.color="#ff0000"
-                turnIndicator.innerHTML="O turns"
-                turn=0
-                turnCount++
+                    this.innerHTML="X"
+                    this.style.color="#ff0000"
+                    lockPlayer=1
+                    updateGameInfo(this)
                 }else if(!this.innerHTML){
-                this.innerHTML="O"
-                this.style.color="#0000ff"
-                turn=1
-                turnIndicator.innerHTML="X turns"
-                turnCount++
+                    this.innerHTML="O"
+                    this.style.color="#0000ff"
+                    lockPlayer=1
+                    updateGameInfo(this)
                 }else{
                     alert("This box is already filled")
                 }
-                fieldUpdate()
-                victoryCheck()
-                if(turnCount==9){
-                    clearField(true)
-                    resultScreen.style.color="#000000"
-                    resultScreen.innerHTML="Tie !"
-                    turnCount=0
-                }
+                fieldListen()
             }
 
         }
         //console.log(gameBoxes[0][1])
-        function fieldUpdate(){
+        function fieldListen(){
             for(let p=0;p<3;p++){
                 for(let i=0;i<3;i++){
                     gameBoxes[p][i]=(document.querySelectorAll(".box")[i+p*3])
@@ -203,13 +234,11 @@
             }
         }
         function victoryCheck(){
-            //checking all of them simultaniously
             if(gameBoxes[0][0].innerHTML==gameBoxes[1][1].innerHTML&&gameBoxes[0][0].innerHTML==gameBoxes[2][2].innerHTML&&gameBoxes[1][1].innerHTML!=0){
                 victoryAlert("diagonal1",0)
             }else if(gameBoxes[1][1].innerHTML==gameBoxes[2][0].innerHTML&&gameBoxes[1][1].innerHTML==gameBoxes[0][2].innerHTML&&gameBoxes[1][1].innerHTML!=0){
                 victoryAlert("diagonal2",2)
             }else{
-                //or checking one by one
                 for(let p=0;p<3;p++){
                     for(let i=0;i<3;i++){
                         if (lastSign==gameBoxes[p][i].innerHTML&&lastSign){
@@ -245,8 +274,21 @@
                 }
                 
             }
+            let tieBool=true
+            for(let i=0;i<3;i++){
+                for(let p=0;p<3;p++){
+                    if(gameBoxes[p][i].innerHTML!="X"&&gameBoxes[p][i].innerHTML!="O"){
+                        tieBool=false
+                        break
+                    }
+                }
+            }
+            if(tieBool==true){
+                resultScreen.style.color="#000000"
+                resultScreen.innerHTML="Tie !"
+                clearField(true)
+            }
 
-            
         }
         function clearField(tie){
             lockPlayer=1
@@ -275,7 +317,7 @@
 
                 for(let p=0;p<3;p++){
                     for(let i=0;i<3;i++){
-                        gameBoxes[p][i].style.transitionDuration="0.5s"
+                        gameBoxes[p][i].style.transitionDuration="0.3s"
                     }
                 }
             }, 20);
@@ -291,16 +333,20 @@
                 }
                 
                 resultScreen.style.color="#ffffff"
-            }, 1500); 
+            }, 500); 
             setTimeout(() => { 
                 for(let p=0;p<3;p++){
                     for(let i=0;i<3;i++){
                         gameBoxes[p][i].innerHTML=null
+                        updateGameInfo(gameBoxes[p][i])
                         gameBoxes[p][i].style.transitionDuration="0s"
+                        gameBoxes[p][i].style.color="#000000"
                     }
                 }
-                lockPlayer=0
-            }, 2500);
+            }, 1000);
+            setTimeout(() => { 
+            lockPlayer=0
+            }, 2100);
         }
         function victoryAlert(axis,coordinate){
             if(turn==1){
@@ -324,7 +370,7 @@
             line.style.height="15px" 
             gameBoxes[coordinate][0].appendChild(line)
             }else if(axis=="diagonal1"){
-            line.style.transformOrigin="top left"//super useful hujna
+            line.style.transformOrigin="top left"
             line.style.left="20px" 
             line.style.top="10px" 
             line.style.width="400px"
@@ -343,7 +389,7 @@
             turnCount=0
             clearField()
         }
-        fieldUpdate()
+        fieldListen()
     </script>
 </body>
 </html>

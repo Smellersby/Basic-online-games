@@ -47,9 +47,8 @@ class DatabaseSeeder extends Seeder
             'speed'=>"no",
         ]);
         lobbies::create([
-            'name' => "join me",
+            'name' => "some lobby",
             'creator' => 3,
-            'playerOne' => 3,
             'gameType' => "tic-tac-toe",
             'turn' => 1,
             'speed'=>"no",
