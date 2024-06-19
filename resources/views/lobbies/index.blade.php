@@ -95,7 +95,7 @@
                         <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
                             @csrf
                             @method('GET')
-                            <button type="submit">join</button>
+                            <button type="submit">play</button>
                         </form>
                     @endif
                     @endauth
@@ -111,5 +111,18 @@
         @endforeach
         </table> 
     </div>
+    <script>
+        function exit(){
+            $.ajax({
+            url: '{{ route('lobbies.playerLeave') }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}', // Include CSRF token
+                lobby_id: lobbyId={{$lobby->id}}
+            }
+            });
+        }
+        console.log("script works")
+    </script>
 </body>
 </html>

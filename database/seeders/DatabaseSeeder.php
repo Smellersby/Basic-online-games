@@ -77,17 +77,15 @@ class DatabaseSeeder extends Seeder
                     'lobbyID' => 2,
                     'x' => $x,
                     'y' => $y,
-                    'cellState' => "empty",
                 ]);
             }
         }
-        for($y=0;$y<3;$y++){
-            for($x=0;$x<3;$x++){
+        for($y=0;$y<12;$y++){
+            for($x=0;$x<12;$x++){
                 fields::create([
                     'lobbyID' => 3,
                     'x' => $x,
                     'y' => $y,
-                    'cellState' => "empty",
                 ]);
             }
         }

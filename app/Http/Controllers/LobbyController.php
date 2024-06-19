@@ -9,6 +9,34 @@ use App\Models\fields;
 
 class LobbyController extends Controller
 {
+    public function getGameInfo(Request $request){
+        $lobby = lobbies::find($request->input('lobby_id'));
+        $playerOne = User::find($lobby->playerOne);
+        $playerTwo = User::find($lobby->playerTwo);
+        $fields = fields::where('lobbyID', $lobby->id)->get();
+        
+        $response = [
+            'lobby' => $lobby,
+            'playerOne' => $playerOne,
+            'playerTwo' => $playerTwo,
+            'fields' => $fields
+        ];
+        return response()->json($response);
+    }
+    public function playerLeave(Request $request){
+        $lobby = lobbies::find($request->input('lobby_id'));
+        if ($lobby) {
+            $player= auth()->id(); // either 'playerOne' or 'playerTwo'
+            if($lobby->playerOne==$player){
+                $lobby->playerOne=null;
+            }else if($lobby->playerTwo==$player){
+                $lobby->playerTwo = null;
+            }
+            $lobby->save();
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
+    }
     /**
      * Display a listing of the resource.
      */
@@ -42,7 +70,7 @@ class LobbyController extends Controller
     {
         
         $lobby = lobbies::find($id);
-        $user = User::all();
+        $users = User::all();
         $fields = fields::all();
         if (auth()) {
             if($lobby->playerOne==NULL){
@@ -53,9 +81,9 @@ class LobbyController extends Controller
             $lobby->save();
         }
         if($lobby->gameType=="tic-tac-toe"){
-            return view('lobbies.ticTacToe', compact('lobby','user','fields'));
+            return view('lobbies.ticTacToe', compact('lobby','users','fields'));
         }else if($lobby->gameType=="snake"){
-            return view('lobbies.snake', compact('lobby','user','fields'));
+            return view('lobbies.snake', compact('lobby','users','fields'));
         }
     }
 

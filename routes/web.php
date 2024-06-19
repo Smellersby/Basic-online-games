@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/lobbies');
 Route::resource('lobbies', LobbyController::class);
 
+Route::post('/lobbies/player-leave', [LobbyController::class, 'playerLeave'])->name('lobbies.playerLeave');
+Route::post('/lobbies/getGameInfo', [LobbyController::class, 'getGameInfo'])->name('lobbies.getGameInfo');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

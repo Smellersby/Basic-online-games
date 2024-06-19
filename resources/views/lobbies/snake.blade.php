@@ -7,5 +7,8 @@
 </head>
 <body>
     <p>hello snake</p>
+    <script>
+        
+    </script>
 </body>
 </html>
