@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         lobbies::create([
-            'name' => "my first lobby",
+            'name' => "My first lobby",
             'creator' => 1,
             'playerOne' => 1,
             'playerTwo' => 2,
@@ -47,14 +47,14 @@ class DatabaseSeeder extends Seeder
             'speed'=>"no",
         ]);
         lobbies::create([
-            'name' => "some lobby",
+            'name' => "SomeGuy's lobby",
             'creator' => 3,
             'gameType' => "tic-tac-toe",
             'turn' => 1,
             'speed'=>"no",
         ]);
         lobbies::create([
-            'name' => "empty snake lobby",
+            'name' => "Empty snake lobby",
             'creator' => 2,
             'gameType' => "snake",
             'turn' => 0,
@@ -62,11 +62,18 @@ class DatabaseSeeder extends Seeder
         ]);
         for($y=0;$y<3;$y++){
             for($x=0;$x<3;$x++){
+                if($x==1&&$y==1){
+                    $cellState="X";
+                }else if($x==2&&$y==2){
+                    $cellState="O";
+                }else{
+                    $cellState=null;
+                }
                 fields::create([
                     'lobbyID' => 1,
                     'x' => $x,
                     'y' => $y,
-                    'cellState' => "empty",
+                    'cellState'=>$cellState
                 ]);
             }
         }

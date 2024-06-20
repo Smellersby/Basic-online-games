@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\lobbies;
 use App\Models\fields;
 
+use function GuzzleHttp\default_user_agent;
+
 class LobbyController extends Controller
 {
     public function getGameInfo(Request $request){
@@ -15,12 +17,6 @@ class LobbyController extends Controller
         $playerTwo = User::find($lobby->playerTwo);
         $fields = fields::where('lobbyID', $lobby->id)->get();
 
-        $response = [
-            'lobby' => $lobby,
-            'playerOne' => $playerOne,
-            'playerTwo' => $playerTwo,
-            'fields' => $fields
-        ];
         
         $currentUser=User::find(auth()->id());
         if ($currentUser) {
@@ -29,6 +25,20 @@ class LobbyController extends Controller
                 $currentUser->save();
             }
         }
+
+        if($playerOne==$playerTwo){
+            $lobby->playerTwo=NULL;
+            $lobby->save();
+            $playerTwo = User::find($lobby->playerTwo);
+        }
+        
+        $response = [
+            'lobby' => $lobby,
+            'playerOne' => $playerOne,
+            'playerTwo' => $playerTwo,
+            'fields' => $fields
+        ];
+
         return response()->json($response);
     }
     public function updateGameInfo(Request $request){

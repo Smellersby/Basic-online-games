@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{$lobby->name}}</title>
     <style>
+        /*red:#e10c0c, blue: #0e23de*/
         a{
             color: black;
         }
-        body{
+        body {
+            margin: 0px;
             display: flex;
-            align-items: center;
-            flex-flow: column;
+            justify-content: center;
         }
         .box{
         display: flex;
@@ -19,7 +20,7 @@
         align-items: center;
         width:100px;
         height: 100px;
-        background-color: #ffffff;
+        background-color: rgb(255, 255, 255);
         font-family: Arial, Helvetica, sans-serif;
         font-size: 52px;
         font-weight: 750;
@@ -67,9 +68,9 @@
             background-color: rgb(226, 226, 226);
         }
         #mainContainer{
-        width: 1000px;
+        width: 700px;
         padding: 10px;
-        background-color: rgb(244, 246, 247);
+        background-color: rgb(255, 255, 255);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -77,12 +78,14 @@
     </style>
 </head>
 <body>
-    <div class="mainContainer">
+    <div id="mainContainer">
         @if($lobby->playerOne==Auth::id()||$lobby->playerTwo==Auth::id())
         <button onclick="exit()">Leave game</button>
         <br>
         @endif
-        <h1>Tic-Tac-Toe</h1>
+        <h1 id="lobbyHeader">Tic-Tac-Toe</h1>
+        <h2 id="playerIndicator"></h2>
+        <h2 id="scoreIndicator">game score:</h2>
         <div class="gridContainer">
             <div class="box" id="00"></div>
             <div class="box" id="10"></div>
@@ -95,11 +98,6 @@
             <div class="box" id="22"></div>
         </div>
         <h2 id="turnIndicator">
-            @if($lobby->turn==1)
-                {{$users[$lobby->playerOne-1]->name}}
-            @else
-                {{$users[$lobby->playerTwo-1]->name}}
-            @endif
         </h2>
         <h3 id="results"></h3>
     </div>
@@ -116,6 +114,7 @@
         let diagonalVictory=0
         let lastSign=0
         let lockPlayer=1
+        let alreadyTriedToExit=false
 
 
         function getGameInfo(){
@@ -132,35 +131,37 @@
                         for(let x=0;x<3;x++){
                             for(let y=0;y<3;y++){
                                 gameBoxes[x][y].innerHTML=response.fields[j].cellState
+                                if(gameBoxes[x][y].innerHTML=="X"){
+                                    gameBoxes[x][y].style.color="#e10c0c"
+                                }else{
+                                    gameBoxes[x][y].style.color="#0e23de"
+                                }
                                 j++;
                             }
                         }
-                        //console.log(response)
-                        //console.log("turn check"," player ",response.lobby.turn," turns. player1: ",response.playerOne.id," player2: ",response.playerTwo.id," me: ",{{Auth::id()}})
-                        
-                        @auth
-                        if({{Auth::id()}}){
-                            if(response.lobby.turn==1 && response.playerTwo.id=={{Auth::id()}}){
-                                lockPlayer=1;
+                        turn=response.lobby.turn
+                        lobbyHeader.innerHTML=response.lobby.name
+                        if(response.playerOne!=null && response.playerTwo!=null){
+                            playerIndicator.innerHTML= response.playerOne.name+" VS "+response.playerTwo.name;
+                            if(response.lobby.turn==1){
                                 turnIndicator.innerHTML=response.playerOne.name+" turns"
-                            }else if(response.lobby.turn==2 && response.playerOne.id=={{Auth::id()}}){
-                                lockPlayer=1;
-                                turnIndicator.innerHTML=response.playerTwo.name+" turns"
-                            }else if(response.lobby.turn==1 && response.playerOne.id=={{Auth::id()}}){
-                                lockPlayer=0;
-                                turnIndicator.innerHTML=response.playerOne.name+" turns"
-                            }else if(response.lobby.turn==2 && response.playerTwo.id=={{Auth::id()}}){
-                                lockPlayer=0;
+                            }else{
                                 turnIndicator.innerHTML=response.playerTwo.name+" turns"
                             }
+                            lockPlayer=1;
+                            @auth
+                                if((response.lobby.turn==1 && response.playerOne.id=={{Auth::id()}})||(response.lobby.turn==2 && response.playerTwo.id=={{Auth::id()}})){
+                                    lockPlayer=0;
+                                }
+                            @endauth
+                            victoryCheck();
                         }
-                        victoryCheck();
-                        @endauth
                     },
                     error: function(xhr, status, error) {
                         console.log("bad get");
                     }
-                });
+                
+            });
         }
         $(document).ready(function() {
             getGameInfo();
@@ -168,19 +169,22 @@
         });
 
         function exit(){
-            $.ajax({
-                url: '{{ route('lobbies.playerLeave') }}',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}', 
-                    lobby_id: lobbyId={{$lobby->id}}
-                },
-                success: function(response) {
-                    window.location.href = '/lobbies'; 
-                }
-            });
+            if(alreadyTriedToExit==false){
+                alreadyTriedToExit=true
+                $.ajax({
+                    url: '{{ route('lobbies.playerLeave') }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}', 
+                        lobby_id: lobbyId={{$lobby->id}}
+                    },
+                    success: function(response) {
+                        window.location.href = '/lobbies'; 
+                    }
+                });
+            }
         }
-        //window.addEventListener('beforeunload', exit);
+        window.addEventListener('beforeunload', exit);
 
         function updateGameInfo(changedBox){
             $.ajax({
@@ -209,12 +213,12 @@
             if(lockPlayer==0){
                 if(turn==1&&!this.innerHTML){
                     this.innerHTML="X"
-                    this.style.color="#ff0000"
+                    this.style.color="#e10c0c"
                     lockPlayer=1
                     updateGameInfo(this)
                 }else if(!this.innerHTML){
                     this.innerHTML="O"
-                    this.style.color="#0000ff"
+                    this.style.color="#0e23de"
                     lockPlayer=1
                     updateGameInfo(this)
                 }else{
@@ -344,9 +348,6 @@
                     }
                 }
             }, 1000);
-            setTimeout(() => { 
-            lockPlayer=0
-            }, 2100);
         }
         function victoryAlert(axis,coordinate){
             if(turn==1){
