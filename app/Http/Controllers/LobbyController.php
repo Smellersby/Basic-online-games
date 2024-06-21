@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\lobbies;
 use App\Models\fields;
+use Psy\Readline\Userland;
 
 use function GuzzleHttp\default_user_agent;
 
@@ -91,7 +92,14 @@ class LobbyController extends Controller
      */
     public function create()
     {
-        //
+        if (auth()->guest()) {
+            abort(401, 'Only authorised users can create lobbies');
+        }
+        if(lobbies::where('creator',auth()->id())->first()){
+            abort(403, 'You are not allowed to have more than one lobby');
+        }
+        $users = User::all()->sortByDesc('created_at');
+        return view('lobbies.create', compact('users'));
     }
 
     /**

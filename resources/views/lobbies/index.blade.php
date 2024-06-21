@@ -41,7 +41,7 @@
     #mainContainer{
         width: 1000px;
         padding: 10px;
-        background-color: rgb(244, 246, 247);
+        background-color: rgb(234, 236, 237);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -50,6 +50,7 @@
         background-color: rgb(250, 251, 252);
         padding: 3px 15px;
         min-width: 50px;
+        height: 35px;
     }
     form{
         margin: 5px 0px;
@@ -86,7 +87,7 @@
             @auth
             <form id="createForm" method="POST" action="{{ route('lobbies.create') }}">
                 @csrf
-                @method('POST')
+                @method('GET')
             <button type="submit">create lobby</button>
             </form>
             @endauth

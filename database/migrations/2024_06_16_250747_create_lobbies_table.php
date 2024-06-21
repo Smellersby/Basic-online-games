@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreignId('playerOne')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('playerTwo')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('gameType',length:35);
-            $table->string('turn',length:35);
-            $table->string('speed',length:45);
+            $table->integer('turn')->default(1);
+            $table->string('speed',length:45)->default("slow");
 
             $table->timestamps();
         });
