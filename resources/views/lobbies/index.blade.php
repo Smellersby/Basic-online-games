@@ -132,7 +132,14 @@
                                 <button type="submit">play</button>
                             </form>
                         @endif
-                        @endauth
+
+                        @if ($lobby->creator==Auth::id())
+                            <form method="GET" action="{{ route('lobbies.edit', $lobby->id) }}">
+                                @csrf
+                                <button type="submit">edit</button>
+                            </form>
+                        @endif
+                        
                         @if ($lobby->creator==Auth::id())
                             <form method="POST" action="{{ route('lobbies.destroy', $lobby->id) }}">
                                 @csrf
@@ -140,6 +147,7 @@
                                 <button type="submit">delete</button>
                             </form>
                         @endif
+                        @endauth
                     </td>
                 </tr>
             @endforeach

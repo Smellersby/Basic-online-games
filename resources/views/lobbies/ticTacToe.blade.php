@@ -56,13 +56,17 @@
             transition-duration: 0.5s;
         }
         button{
-            align-self: flex-start;
         background-color: rgb(248, 248, 248);
         border-radius: 6px;
         border-style: solid;
         border-color: black;
         padding: 4px;
         border-width: 1px;
+        }
+        #buttonDiv{
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
         }
         button:hover{
             background-color: rgb(226, 226, 226);
@@ -79,10 +83,14 @@
 </head>
 <body>
     <div id="mainContainer">
-        @if($lobby->playerOne==Auth::id()||$lobby->playerTwo==Auth::id())
-        <button onclick="exit()">Leave game</button>
-        <br>
-        @endif
+        <div id="buttonDiv">
+            @if($lobby->playerOne==Auth::id()||$lobby->playerTwo==Auth::id())
+            <button onclick="exit()">Leave game</button>
+            @endif
+            @if($lobby->creator==Auth::id())
+            <button onclick=exit(1)>Edit</button>
+            @endif     
+        </div>
         <h1 id="lobbyHeader">Tic-Tac-Toe</h1>
         <h2 id="playerIndicator"></h2>
         <h2 id="scoreIndicator">game score:</h2>
@@ -116,7 +124,6 @@
         let lockPlayer=1
         let alreadyTriedToExit=false
 
-
         function getGameInfo(){
             $.ajax({
                     url: '{{ route('lobbies.getGameInfo') }}',
@@ -138,6 +145,9 @@
                                 }
                                 j++;
                             }
+                        }
+                        if(response.lobby.gameType=="snake"){
+                            exit();
                         }
                         turn=response.lobby.turn
                         lobbyHeader.innerHTML=response.lobby.name
@@ -168,7 +178,7 @@
             setInterval(getGameInfo, 1200);
         });
 
-        function exit(){
+        function exit(reason){
             if(alreadyTriedToExit==false){
                 alreadyTriedToExit=true
                 $.ajax({
@@ -179,7 +189,11 @@
                         lobby_id: lobbyId={{$lobby->id}}
                     },
                     success: function(response) {
-                        window.location.href = '/lobbies'; 
+                        if(reason==1){//1=="edit"
+                            window.location.href = '{{ route('lobbies.edit', $lobby->id) }}';
+                        }else{
+                            window.location.href = '/lobbies'; 
+                        }
                     }
                 });
             }

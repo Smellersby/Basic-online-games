@@ -61,6 +61,50 @@ class LobbyController extends Controller
         }
         return response()->json(['success' => false, 'message' => 'field not found'], 404);
     }
+
+    public function getGameInfoSnake(Request $request){
+        $lobby = lobbies::find($request->input('lobby_id'));
+        $playerOne = User::find($lobby->playerOne);
+        $playerTwo = User::find($lobby->playerTwo);
+
+        
+        $currentUser=User::find(auth()->id());
+        if ($currentUser) {
+            if($currentUser->id==$playerOne->id||$currentUser->id==$playerTwo->id){
+                $currentUser->status="in game";
+                $currentUser->save();
+            }
+        }
+
+        if($playerOne==$playerTwo){
+            $lobby->playerTwo=NULL;
+            $lobby->save();
+            $playerTwo = User::find($lobby->playerTwo);
+        }
+        
+        $response = [
+            'lobby' => $lobby,
+            'playerOne' => $playerOne,
+            'playerTwo' => $playerTwo
+        ];
+
+        return response()->json($response);
+    }
+    
+    public function updateGameInfoSnake(Request $request){
+        $lobby = lobbies::find($request->input('lobby_id'));
+        $playerOne= user::find($lobby->playerOne);
+        $playerTwo= user::find($lobby->playerTwo);
+        $lobby->foodX=$request->input('foodX');
+        $lobby->foodY=$request->input('foodY');
+        $playerOne->direction=$request->input('playerOneDirection');
+        $playerTwo->direction=$request->input('playerTwoDirection');
+        
+        $playerOne->length=$request->input('playerOneLength');
+        $playerTwo->length=$request->input('playerTwoLength');
+        $lobby->save();
+    }
+
     public function playerLeave(Request $request){
         $lobby = lobbies::find($request->input('lobby_id'));
         if ($lobby) {
@@ -107,7 +151,27 @@ class LobbyController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        if ($request->name == null || $request->gameType == null) {
+            return redirect()->route('lobbies.create');
+        }
+        $lobby = new lobbies();
+        $lobby->name = $request->name;
+        $lobby->gameType = $request->gameType;
+        $lobby->speed = $request->speed;
+        $lobby->creator=auth()->id();
+        $lobby->save();
+        for($y=0;$y<3;$y++){
+            for($x=0;$x<3;$x++){
+                fields::create([
+                    'lobbyID' => $lobby->id,
+                    'x' => $x,
+                    'y' => $y,
+                ]);
+            }
+        }
+        
+        return redirect()->route('lobbies.show', $lobby->id);
+
     }
 
     /**
@@ -139,7 +203,13 @@ class LobbyController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $lobby = lobbies::find($id);
+        if (auth()->id()!=$lobby->creator) {
+            abort(403,'You are not the author');
+        }
+        
+        return view('lobbies.edit', compact('lobby'));
+
     }
 
     /**
@@ -147,8 +217,19 @@ class LobbyController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $lobby = lobbies::find($id);
+        if (auth()->id()!=$lobby->creator) {
+            abort(403,'You are not the author');
+        }
+        if ($request->name == null || $request->gameType == null) {
+            return redirect()->route('lobby.edit', $id);
+        }
+        $lobby->name = $request->name;
+        $lobby->gameType = $request->gameType;
+        $lobby->save();
+        return redirect()->route('lobbies.show', $id);
     }
+
 
     /**
      * Remove the specified resource from storage.

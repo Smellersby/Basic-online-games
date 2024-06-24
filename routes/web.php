@@ -9,6 +9,8 @@ Route::resource('lobbies', LobbyController::class);
 Route::post('/lobbies/getGameInfo', [LobbyController::class, 'getGameInfo'])->name('lobbies.getGameInfo');
 Route::post('/lobbies/playerLeave', [LobbyController::class, 'playerLeave'])->name('lobbies.playerLeave');
 Route::post('/lobbies/updateGameInfo', [LobbyController::class, 'updateGameInfo'])->name('lobbies.updateGameInfo');
+Route::post('/lobbies/getGameInfoSnake', [LobbyController::class, 'getGameInfoSnake'])->name('lobbies.getGameInfoSnake');
+Route::post('/lobbies/updateGameInfoSnake', [LobbyController::class, 'updateGameInfoSnake'])->name('lobbies.updateGameInfoSnake');
 
 URL::forceScheme('https');
 

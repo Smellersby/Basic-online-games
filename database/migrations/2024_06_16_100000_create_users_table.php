@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('status', length:30)->default("not in game");
             $table->boolean('alive')->default(false);
             $table->string('direction',length:20)->default("");
-            $table->integer('length')->default(0);
+            $table->integer('length')->default(3);
             $table->integer('wins')->default(0);
             $table->integer('totalWins')->default(0);
             $table->integer('totalLosses')->default(0);

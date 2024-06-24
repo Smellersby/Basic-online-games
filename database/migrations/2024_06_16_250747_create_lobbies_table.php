@@ -21,6 +21,9 @@ return new class extends Migration
             $table->string('gameType',length:35);
             $table->integer('turn')->default(1);
             $table->string('speed',length:45)->default("slow");
+            $table->integer('foodX')->default(0);
+            $table->integer('foodY')->default(0);
+            $table->integer('start')->default(0);
 
             $table->timestamps();
         });
