@@ -72,16 +72,25 @@
 <body>
     <div id="mainContainer">
         <div id="accountManagment">
+            
             @auth 
             <p>logged in as {{ $users[Auth::id()-1]->name }}</p>
             <a href="{{ url('/dashboard') }}"><button>dashboard</button></a>
             @endauth
+            
             @guest
             <a href="{{ url('/login') }}"><button>log in</button></a>
             <a href="{{ url('/register') }}"><button>register</button></a>
             @endguest
+            <form method="GET" action="{{ route('lobbies.index')}}">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" id="selectLanguage" name="selectLanguage" value="lv">
+                <button id="lvButton" type="submit">LV</button>
+            </form>
+            
         </div>
-        <h1>Welcome to Basic-online-games</h1>
+        <h1>{{__('messages.welcome')}}</h1>
         <div id="listContainer">
             <h2>List of lobbies</h2>
             @auth
@@ -133,15 +142,15 @@
                             </form>
                         @endif
 
-                        @if ($lobby->creator==Auth::id())
+                        @if ($lobby->creator==Auth::id()|| $users[Auth::id()-1]->role=="admin")
                             <form method="GET" action="{{ route('lobbies.edit', $lobby->id) }}">
                                 @csrf
                                 <button type="submit">edit</button>
                             </form>
                         @endif
                         
-                        @if ($lobby->creator==Auth::id())
-                            <form method="POST" action="{{ route('lobbies.destroy', $lobby->id) }}">
+                        @if ($lobby->creator==Auth::id()|| $users[Auth::id()-1]->role=="admin")
+                            <form method="POST" action="{{ route('lobbies.destroy', $lobby->id)}}">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit">delete</button>
@@ -155,6 +164,12 @@
         </div>
     </div>
     <script>
+        lvButton.addEventListener('mousedown',()=>{
+            localStorage.setItem('language', 'lv');
+            let language = localStorage.getItem('language');
+            console.log(language); 
+        })
+
         function exit(){
             $.ajax({
             url: '{{ route('lobbies.playerLeave') }}',

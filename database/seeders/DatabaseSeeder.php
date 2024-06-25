@@ -36,6 +36,12 @@ class DatabaseSeeder extends Seeder
             'email' => 'vadim@inbox.lv',
             'password'=>'vadim228'
         ]);
+        User::factory()->create([
+            'name' => 'admin',
+            'email' => 'admin@inbox.lv',
+            'password'=>'admin',
+            'role' => 'admin'
+        ]);
 
         lobbies::create([
             'name' => "My first lobby",
@@ -60,6 +66,7 @@ class DatabaseSeeder extends Seeder
             'turn' => 0,
             'speed'=>"slow",
         ]);
+        
         for($y=0;$y<3;$y++){
             for($x=0;$x<3;$x++){
                 if($x==1&&$y==1){

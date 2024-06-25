@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\lobbies;
 use App\Models\fields;
-use Psy\Readline\Userland;
-
-use function GuzzleHttp\default_user_agent;
 
 class LobbyController extends Controller
 {
@@ -68,7 +67,7 @@ class LobbyController extends Controller
         $playerTwo = User::find($lobby->playerTwo);
 
         
-        $currentUser=User::find(auth()->id());
+        $currentUser=User::find(auth()->id()); 
         if ($currentUser) {
             if($currentUser->id==$playerOne->id||$currentUser->id==$playerTwo->id){
                 $currentUser->status="in game";
@@ -76,7 +75,7 @@ class LobbyController extends Controller
             }
         }
 
-        if($playerOne==$playerTwo){
+        if($playerOne==$playerTwo){ //player duplicate check
             $lobby->playerTwo=NULL;
             $lobby->save();
             $playerTwo = User::find($lobby->playerTwo);
@@ -91,18 +90,45 @@ class LobbyController extends Controller
         return response()->json($response);
     }
     
-    public function updateGameInfoSnake(Request $request){
-        $lobby = lobbies::find($request->input('lobby_id'));
-        $playerOne= user::find($lobby->playerOne);
-        $playerTwo= user::find($lobby->playerTwo);
-        $lobby->foodX=$request->input('foodX');
-        $lobby->foodY=$request->input('foodY');
+    public function updateSnake1(Request $request){
+        $lobby = lobbies::find($request->input('lobbyID'));
+        if (!$lobby) {
+            return response()->json(['error' => 'Lobby not found'], 404);
+        }
+        $playerOne = User::find($lobby->playerOne);
+        if (!$playerOne) {
+            return response()->json(['error' => 'Player One not found'], 404);
+        }
         $playerOne->direction=$request->input('playerOneDirection');
+        $playerOne->save();
+        return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
+    }
+    public function updateSnake2(Request $request){
+        $lobby = lobbies::find($request->input('lobbyID'));
+        if (!$lobby) {
+            return response()->json(['error' => 'Lobby not found'], 404);
+        }
+        $playerTwo= User::find($lobby->playerTwo);
+        if (!$playerTwo) {
+            return response()->json(['error' => 'Player two not found'], 404);
+        }
         $playerTwo->direction=$request->input('playerTwoDirection');
-        
-        $playerOne->length=$request->input('playerOneLength');
-        $playerTwo->length=$request->input('playerTwoLength');
-        $lobby->save();
+        $playerTwo->save();
+        return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
+    }
+
+    public function updateP2Status(Request $request){
+        $lobby = lobbies::find($request->input('lobbyID'));
+        if (!$lobby) {
+            return response()->json(['error' => 'Lobby not found'], 404);
+        }
+        $playerTwo = User::find($lobby->playerTwo);
+        if (!$playerTwo) {
+            return response()->json(['error' => 'Player One not found'], 404);
+        }
+        $playerTwo->status=$request->input('status');
+        $playerTwo->save();
+        return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
     }
 
     public function playerLeave(Request $request){
@@ -120,21 +146,22 @@ class LobbyController extends Controller
         }
         return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
     }
-    
+
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $lobbies = lobbies::all()->sortByDesc('created_at');
         $users = User::all()->sortByDesc('created_at');
+        App::setLocale($request->input('selectLanguage'));
         return view('lobbies.index', compact('lobbies','users'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         if (auth()->guest()) {
             abort(401, 'Only authorised users can create lobbies');
@@ -204,7 +231,7 @@ class LobbyController extends Controller
     public function edit(string $id)
     {
         $lobby = lobbies::find($id);
-        if (auth()->id()!=$lobby->creator) {
+        if (auth()->id()!=$lobby->creator && User::find(auth()->id())->role!="admin") {
             abort(403,'You are not the author');
         }
         
@@ -218,7 +245,7 @@ class LobbyController extends Controller
     public function update(Request $request, string $id)
     {
         $lobby = lobbies::find($id);
-        if (auth()->id()!=$lobby->creator) {
+        if (auth()->id()!=$lobby->creator && User::find(auth()->id())->role!="admin") {
             abort(403,'You are not the author');
         }
         if ($request->name == null || $request->gameType == null) {
@@ -236,7 +263,21 @@ class LobbyController extends Controller
      */
     public function destroy(string $id)
     {
+        $lobby = lobbies::find($id);
+        if (auth()->id()!=$lobby->creator && User::find(auth()->id())->role!="admin") {
+            abort(403,'You are not the author');
+        }
         Lobbies::findOrfail($id)->delete();
         return redirect()->route('lobbies.index');
     }
+}
+
+    
+class LanguageController extends Controller
+{
+public function changeLanguage($locale)
+{
+    Session::put('locale', $locale);
+    return redirect()->back();
+}
 }

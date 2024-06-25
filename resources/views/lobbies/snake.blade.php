@@ -7,18 +7,17 @@
     <style>
 :root {
     --snake:rgb(0, 0, 0);
-    --snake1:rgb(3, 15, 92);
-    --snake2:rgb(92, 3, 3);
+    --snake1:rgb(0, 20, 148);
+    --snake2:rgb(154, 0, 0);
     --background: #43b103;
     --cell: #67cb09;
     --food: hsl(0, 59%, 41%);
     --body: hsl(0, 0%, 100%);
 }
-body{
-    background-color: var(--body);
+body {
+    margin: 0px;
     display: flex;
-    flex-flow: column;
-    align-items: center;
+    justify-content: center;
 }
 img{
     position: absolute;
@@ -32,10 +31,18 @@ a{
     margin-bottom: 20px;
 }
 h1{
+    font-size: 42px;
     font-family: Arial, Helvetica, sans-serif;
-    font-weight: 600;
-    font-size: 20px;
-    color: var(--body);
+}
+h2{
+    font-size: 18px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+h3{
+    color: white;
+    transition-duration: 0.5s;
+    font-size: 32px;
+    font-family: Arial, Helvetica, sans-serif;
 }
 .cell{
     width: 25px;
@@ -100,29 +107,52 @@ p{
 .difficulty:active{
     background-color: gainsboro;
 }
+button{
+    background-color: rgb(248, 248, 248);
+    border-radius: 6px;
+    border-style: solid;
+    border-color: black;
+    padding: 4px;
+    border-width: 1px;
+}
+#buttonDiv{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+#mainContainer{
+    width: 700px;
+    padding: 10px;
+    background-color: rgb(255, 255, 255);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
     </style>
 </head>
 <body>
-    <h1 id="lobbyHeader"></h1>
-    <a href="../HTML/index.html">back to main menu</a>
+    <div id="mainContainer">
+        <div id="buttonDiv">
+            @if($lobby->playerOne==Auth::id()||$lobby->playerTwo==Auth::id())
+            <button onclick="exit()">Leave game</button>
+            @endif
+            @if($lobby->creator==Auth::id())
+            <button onclick=exit(1)>Edit</button>
+            @endif     
+        </div>
+        <h1 id="lobbyHeader"></h1>
         <div id="startingScreen">
-            <h1>Choose speed</h1>
-            <button class="difficulty" id="slow">supr slow</button>
-            <button class="difficulty" id="medium">medium</button>
-            <button class="difficulty" id="fast">fast</button><br>
-            <p id="extraFoodP">Extra food <input id="extraFood" type="checkbox"></p>
-            <button class="difficulty" id="startButton">Start Game</button>
+            
             <h1 id="playerIndicator"></h1>
+            <h1 id="resultIndicator"></h1>
             <div id="fieldContainer">
-
             </div>
         </div>
+    </div>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
     var root = document.querySelector(':root');
 document.body.addEventListener("keydown", keyCheck)
-let startButton = document.getElementById("startButton")
-startButton.addEventListener("click", createField)
 let fieldContainer = document.getElementById("fieldContainer")
 
 let inputKey //first, raw data
@@ -139,18 +169,67 @@ let timerInterval
 let hungry1
 let foodExists
 let randomColorSend
+let savedPlayerTwo,savedPlayerOne
 let speed = 250
 let fun = false
 const field = [];
 
-let slowButton = document.getElementById("slow")
-slowButton.addEventListener("click", () => { speed = 700/*350*/ })
-let mediumButton = document.getElementById("medium")
-mediumButton.addEventListener("click", () => { speed = 250 })
-let fastButton = document.getElementById("fast")
-fastButton.addEventListener("click", () => { speed = 150 })
-let foodBox = document.getElementById("extraFood")
-foodBox.addEventListener("click", () => { fun = foodBox.checked })
+getGameInfoSnake(true)
+function synchronise(){
+    @auth
+    setTimeout(()=>{
+        function waitForP2(){
+            getGameInfoSnake(true)
+            if(savedPlayerTwo!=null && savedPlayerTwo.status=="ready"){
+                console.log("P2 joined and ready")
+                clearInterval(syncInterval)
+                setTimeout(()=>{
+                    console.log("Get ready")
+                    setTimeout(()=>{
+                        console.log("Start")
+                        createField()
+                    },3000)
+                },10)
+            }
+        }
+        if({{Auth::id()}}==savedPlayerOne.id){
+            syncInterval = setInterval(waitForP2, 70);
+        }else if({{Auth::id()}}==savedPlayerTwo.id && savedPlayerOne!=null){
+            updateP2Status("ready");
+            console.log("P2 ready")
+            setTimeout(()=>{
+                console.log("Start")
+                updateP2Status("in game");
+                createField()
+            },3000)
+        }
+    },200)
+    @endauth
+}
+function updateP2Status(status){
+    $.ajax({
+        url: '{{ route('lobbies.updateP2Status') }}',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            lobbyID: {{$lobby->id}},
+            status:status
+        },
+        success: function(response) {
+            if (response.success) {
+                console.log('good update',response); 
+            } else {
+                console.log('update error:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Request failed:', error);
+        }
+    });
+}
+
+
+synchronise()
 
 class cell {
     constructor(y, x) {
@@ -176,11 +255,33 @@ function keyCheck(event) {
             if (lastKey1 != "arrowleft" && lastKey1 != "a") {
                 currentKey1 = inputKey
             }
-        } else {
+        } else if(inputKey == "a" || inputKey == "arrowleft"){
             if (lastKey1 != "arrowright" && lastKey1 != "d") {
                 currentKey1 = inputKey
             }
         }
+        console.log(currentKey1)
+        //currentKey1=inputKey 
+    }
+    if (inputKey == "w" || inputKey == "a" || inputKey == "d" || inputKey == "s" || inputKey == "arrowup" || inputKey == "arrowdown" || inputKey == "arrowleft" || inputKey == "arrowright") {
+        if (inputKey == "w" || inputKey == "arrowup") {
+            if (lastKey2 != "arrowdown" && lastKey2 != "s") {
+                currentKey1 = inputKey
+            }
+        } else if (inputKey == "s" || inputKey == "arrowdown") {
+            if (lastKey2 != "arrowup" && lastKey2 != "w") {
+                currentKey1 = inputKey
+            }
+        } else if (inputKey == "d" || inputKey == "arrowright") {
+            if (lastKey2 != "arrowleft" && lastKey2 != "a") {
+                currentKey1 = inputKey
+            }
+        } else if(inputKey == "a" || inputKey == "arrowleft"){
+            if (lastKey2 != "arrowright" && lastKey2 != "d") {
+                currentKey1 = inputKey
+            }
+        }
+        console.log(currentKey1)
         //currentKey1=inputKey 
     }
 }
@@ -189,8 +290,8 @@ function createField() {
     dead2=false
     hungry1 = true
     hungry2 = true
-    currentKey1= "arrowup"
-    currentKey2= "arrowdown"
+    savedPlayerOne.direction="arrowup"
+    savedPlayerTwo.direction="arrowdown"
     snake1Y = 6
     snake1X = 4
     snake2Y = 4
@@ -231,154 +332,270 @@ function createField() {
     }
 
 }
-
 function gameLoop() {
-    hungry1 = true
-    hungry2 = true
-    if (foodExists == false) {
-        do {
-            randomX = Math.floor(Math.random() * widthInput);
-            randomY = Math.floor(Math.random() * heightInput);
-        } while (field[randomY][randomX].visual.className == "cell snake1"||field[randomY][randomX].visual.className == "cell snake2");
-        field[randomY][randomX].visual.className += " food"
-        foodExists = true
+    @auth
+    if({{Auth::id()}}==savedPlayerOne.id){
+        updateSnake1()
+    }else if({{Auth::id()}}==savedPlayerTwo.id){
+        updateSnake2()
     }
+    @endauth
+    setTimeout(() => { 
+    getGameInfoSnake()
+    setTimeout(() => { 
 
-    lastKey1 = currentKey1
+        hungry1 = true
+        hungry2 = true
+        if (foodExists == false) {
+            do {
+                randomX = Math.floor(Math.random() * widthInput);
+                randomY = Math.floor(Math.random() * heightInput);
+            } while (field[randomY][randomX].visual.className == "cell snake1"||field[randomY][randomX].visual.className == "cell snake2");
+            field[randomY][randomX].visual.className += " food"
+            foodExists = true
+        }
 
-    switch (lastKey1) {
-        case 'arrowup':
-            snake1Y--
-            break;
-        case 'w':
-            snake1Y--
-            break;
-        case "arrowdown":
-            snake1Y++
-            break;
-        case "s":
-            snake1Y++
-            break;
-        case 'arrowleft':
-            snake1X--
-            break;
-        case 'a':
-            snake1X--
-            break;
 
-        case 'arrowright':
-            snake1X++
-            break;
-        case 'd':
-            snake1X++
-            break;
-    }
+        if ((snake1X < widthInput && snake1X > -1) && (snake1Y < heightInput && snake1Y > -1) ) {
+            if (field[snake1Y][snake1X].visual.className == "cell food") {
+                hungry1 = false
+                foodEaten1++
+                foodExists = false
+                field[snake1Y][snake1X].visual.className = "cell snake1"
+                field[snake1Y][snake1X].ticksLeft = foodEaten1 - 1
+            }else if(field[snake1Y][snake1X].ticksLeft>1){
+                dead1=true
+                death();
+            }else {
+                field[snake1Y][snake1X].visual.className += " snake1"
+                field[snake1Y][snake1X].ticksLeft = foodEaten1
+            }
 
-    
-    //lastKey2=currentKey2
-    switch (lastKey2) {
-        case 'arrowup':
-            snake2Y--
-            break;
-        case 'w':
-            snake2Y--
-            break;
-        case "arrowdown":
-            snake2Y++
-            break;
-        case "s":
-            snake2Y++
-            break;
-        case 'arrowleft':
-            snake2X--
-            break;
-        case 'a':
-            snake2X--
-            break;
-
-        case 'arrowright':
-            snake2X++
-            break;
-        case 'd':
-            snake2X++
-            break;
-    }
-    lastKey2=currentKey1 // for testing
-
-    if ((snake1X < widthInput && snake1X > -1) && (snake1Y < heightInput && snake1Y > -1) ) {
-        if (field[snake1Y][snake1X].visual.className == "cell food") {
-            hungry1 = false
-            foodEaten1++
-            foodExists = false
-            field[snake1Y][snake1X].visual.className = "cell snake1"
-            field[snake1Y][snake1X].ticksLeft = foodEaten1 - 1
-        }else if(field[snake1Y][snake1X].ticksLeft>1){
+        } else {
             dead1=true
-            death();
-        }else {
-            field[snake1Y][snake1X].visual.className += " snake1"
-            field[snake1Y][snake1X].ticksLeft = foodEaten1
+            death()
         }
 
-    } else {
-        dead1=true
-        death()
-    }
+        if ((snake2X < widthInput && snake2X > -1) && (snake2Y < heightInput && snake2Y > -1) ) {
+            if (field[snake2Y][snake2X].visual.className == "cell food") {
+                hungry2 = false
+                foodEaten2++
+                foodExists = false
+                field[snake2Y][snake2X].visual.className = "cell snake2"
+                field[snake2Y][snake2X].ticksLeft = foodEaten2 - 1
+            }else if(field[snake2Y][snake2X].ticksLeft>1){
+                dead2=true
+                death();
+            }else {
+                field[snake2Y][snake2X].visual.className += " snake2"
+                field[snake2Y][snake2X].ticksLeft = foodEaten2
+            }
 
-    if ((snake2X < widthInput && snake2X > -1) && (snake2Y < heightInput && snake2Y > -1) ) {
-        if (field[snake2Y][snake2X].visual.className == "cell food") {
-            hungry2 = false
-            foodEaten2++
-            foodExists = false
-            field[snake2Y][snake2X].visual.className = "cell snake2"
-            field[snake2Y][snake2X].ticksLeft = foodEaten2 - 1
-        }else if(field[snake2Y][snake2X].ticksLeft>1){
+        } else {
             dead2=true
-            death();
-        }else {
-            field[snake2Y][snake2X].visual.className += " snake2"
-            field[snake2Y][snake2X].ticksLeft = foodEaten2
+            death()
         }
 
-    } else {
-        dead2=true
-        death()
-    }
 
-
-    for (let y = 0; y < field.length; y++) {
-        for (let x = 0; x < field[y].length; x++) {
-            console.log(field[y][x].visual.className)
-            if (hungry1 == true) {
-                if(field[y][x].visual.className=="cell snake1"){
-                    field[y][x].ticksLeft--
+        for (let y = 0; y < field.length; y++) {
+            for (let x = 0; x < field[y].length; x++) {
+                if (hungry1 == true) {
+                    if(field[y][x].visual.className=="cell snake1"){
+                        field[y][x].ticksLeft--
+                    }
+                }
+                if (hungry2 == true) {
+                    if(field[y][x].visual.className=="cell snake2"){
+                        field[y][x].ticksLeft--
+                    }
+                }
+                if (field[y][x].ticksLeft < 1 && field[y][x].visual.className != "cell food") {
+                    field[y][x].visual.className = "cell"
                 }
             }
-            if (hungry2 == true) {
-                if(field[y][x].visual.className=="cell snake2"){
-                    field[y][x].ticksLeft--
-                }
-            }
-            if (field[y][x].ticksLeft < 1 && field[y][x].visual.className != "cell food") {
-                field[y][x].visual.className = "cell"
-            }
-        }
-    }
-}
-
-function death(){
-    clearInterval(timerInterval)
-    setTimeout(() => {
-        if(dead1==true&&dead2==true){
-            alert("tie")
-        }else if(dead1==true){
-            alert("player 2 wins")
-        }else{
-            alert("player 1 wins")
         }
         
-    }, 200);
+    }, 100);
+}, 100);
 }
+function getGameInfoSnake(sync){
+    $.ajax({
+            url: '{{ route('lobbies.getGameInfoSnake') }}',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+            _token: '{{ csrf_token() }}', 
+            lobby_id: lobbyId={{$lobby->id}}
+            },
+            success: function(response) {
+                //console.log("let me see",response)
+                switch (response.lobby.speed) {
+                case "super slow":
+                    speed=2000
+                    break;
+                case "slow":
+                    speed=1000
+                    break;
+                case "medium":
+                    speed=500
+                    break;
+                case "fast":
+                    speed=200
+                    break;
+                }
+            lobbyHeader.innerHTML=response.lobby.name
+            savedPlayerOne=response.playerOne
+            savedPlayerTwo=response.playerTwo
+            if((savedPlayerOne==null || savedPlayerTwo==null) && sync!=true){
+                death("left")
+            }
+            if(sync!=true){
+                lastKey1 = response.playerOne.direction
+                switch (lastKey1) {
+                case 'arrowup':
+                    snake1Y--
+                    break;
+                case 'w':
+                    snake1Y--
+                    break;
+                case "arrowdown":
+                    snake1Y++
+                    break;
+                case "s":
+                    snake1Y++
+                    break;
+                case 'arrowleft':
+                    snake1X--
+                    break;
+                case 'a':
+                    snake1X--
+                    break;
+                case 'arrowright':
+                    snake1X++
+                    break;
+                case 'd':
+                    snake1X++
+                    break;
+                }
+
+                lastKey2=response.playerTwo.direction
+                switch (lastKey2) {
+                case 'arrowup':
+                    snake2Y--
+                    break;
+                case 'w':
+                    snake2Y--
+                    break;
+                case "arrowdown":
+                    snake2Y++
+                    break;
+                case "s":
+                    snake2Y++
+                    break;
+                case 'arrowleft':
+                    snake2X--
+                    break;
+                case 'a':
+                    snake2X--
+                    break;
+
+                case 'arrowright':
+                    snake2X++
+                    break;
+                case 'd':
+                    snake2X++
+                    break;
+                }
+            }
+            },
+            error: function(xhr, status, error) {
+                console.log("bad get");
+            }
+        
+    });
+}
+function updateSnake1(){
+    $.ajax({
+        url: '{{ route('lobbies.updateSnake1') }}',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            lobbyID: {{$lobby->id}},
+            playerOneDirection:currentKey1
+        },
+        success: function(response) {
+            if (response.success) {
+                console.log('good update',response); 
+            } else {
+                console.log('update error:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Request failed:', error);
+        }
+    });
+}
+function updateSnake2(){
+    $.ajax({
+        url: '{{ route('lobbies.updateSnake2') }}',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            lobbyID: {{$lobby->id}},
+            playerTwoDirection:currentKey1
+        },
+        success: function(response) {
+            if (response.success) {
+                console.log('good update',response); 
+            } else {
+                console.log('update error:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Request failed:', error);
+        }
+    });
+}
+
+function death(reason){
+    clearInterval(timerInterval)
+    if(reason=="left"){
+        alert("opponent left the game")
+    }else if(dead1==true&&dead2==true){
+        resultIndicator.innerHTML=="Tie !"
+    }else if(dead1==true){
+        resultIndicator.innerHTML==savedPlayerTwo.name+" wins !"
+    }else{
+        resultIndicator.innerHTML==savedPlayerOne.name+" wins !"
+    }
+    setTimeout(() => {resultIndicator.innerHTML=="Tie"}, 3000);
+    synchronise();
+}
+
+
+
+let alreadyTriedToExit=false
+function exit(reason){
+            if(alreadyTriedToExit==false){
+                alreadyTriedToExit=true
+                $.ajax({
+                    url: '{{ route('lobbies.playerLeave') }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}', 
+                        lobby_id: lobbyId={{$lobby->id}}
+                    },
+                    success: function(response) {
+                        if(reason==1){//1=="edit"
+                            window.location.href = '{{ route('lobbies.edit', $lobby->id) }}';
+                        }else{
+                            window.location.href = '/lobbies'; 
+                        }
+                    }
+                });
+            }
+        }
+        window.addEventListener('beforeunload', exit);
     </script>
 </body>
 </html>

@@ -3,6 +3,8 @@ use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\App;
+use App\Http\Controllers\LanguageController;
 
 Route::redirect('/', '/lobbies');
 Route::resource('lobbies', LobbyController::class);
@@ -10,7 +12,17 @@ Route::post('/lobbies/getGameInfo', [LobbyController::class, 'getGameInfo'])->na
 Route::post('/lobbies/playerLeave', [LobbyController::class, 'playerLeave'])->name('lobbies.playerLeave');
 Route::post('/lobbies/updateGameInfo', [LobbyController::class, 'updateGameInfo'])->name('lobbies.updateGameInfo');
 Route::post('/lobbies/getGameInfoSnake', [LobbyController::class, 'getGameInfoSnake'])->name('lobbies.getGameInfoSnake');
-Route::post('/lobbies/updateGameInfoSnake', [LobbyController::class, 'updateGameInfoSnake'])->name('lobbies.updateGameInfoSnake');
+Route::post('/lobbies/updateSnake1', [LobbyController::class, 'updateSnake1'])->name('lobbies.updateSnake1');
+Route::post('/lobbies/updateSnake2', [LobbyController::class, 'updateSnake2'])->name('lobbies.updateSnake2');
+Route::post('/lobbies/updateP2Status', [LobbyController::class, 'updateP2Status'])->name('lobbies.updateP2Status');
+
+
+Route::get('language/{locale}', function ($locale) {
+    app()->setLocale($locale);
+    session()->put('locale', $locale);
+
+    return redirect()->back();
+});
 
 URL::forceScheme('https');
 
