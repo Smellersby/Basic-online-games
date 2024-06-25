@@ -6,10 +6,11 @@
     <title>{{$lobby->name}}</title>
     <style>
 :root {
-    --snake1:rgb(3, 15, 92)0;
-    --snake1:rgb(92, 3, 3)0;
-    --background: #3e8000;
-    --cell: #43b103;
+    --snake:rgb(0, 0, 0);
+    --snake1:rgb(3, 15, 92);
+    --snake2:rgb(92, 3, 3);
+    --background: #43b103;
+    --cell: #67cb09;
     --food: hsl(0, 59%, 41%);
     --body: hsl(0, 0%, 100%);
 }
@@ -54,7 +55,7 @@ h1{
 .snake1{
     background-color: var(--snake1);
 }
-.snake1{
+.snake2{
     background-color: var(--snake2);
 }
 .food{
@@ -68,7 +69,7 @@ h1{
 #startingScreen{
     padding: 30px;
     width: fit-content;
-    background-color: var(--cell);
+    background-color: var(--background);
     border-radius: 10px;
     margin-top: 30px;
     margin-bottom: 50px;
@@ -92,7 +93,7 @@ p{
     height: 30px;
     border-radius: 8px;
     font-size: 18px;
-    color: var(--snake);
+    color: var(--snake1);
     background-color: var(--body);
     border-style: none;
 }
@@ -125,122 +126,31 @@ startButton.addEventListener("click", createField)
 let fieldContainer = document.getElementById("fieldContainer")
 
 let inputKey //first, raw data
-let currentKey //checked value
-let lastKeyOne //used value
-let lastKeyTwo 
+let currentKey1,currentKey2 //checked value
+let lastKey1,lastKey2 //used value
+let dead1,dead2
 let fieldExists = false
 let widthInput = 11
 let heightInput = 11
-let snake1Y,snake1X
-let snake2Y,snake2X
+let snake1Y,snake2Y
+let snake1X,snake2X
 let foodEaten1,foodEaten2
-let foodX,foodY
-let timerInterval, preGameInterval
-let hungry1,hungry2
-let alive1,alive2
-let playerOneId,playerTwoId
+let timerInterval
+let hungry1
 let foodExists
-let start=0;
+let randomColorSend
 let speed = 250
 let fun = false
 const field = [];
+
 let slowButton = document.getElementById("slow")
-slowButton.addEventListener("click", () => { speed = 3000 })
-/*
-function getGameInfoSnake(){
-            $.ajax({
-                    url: '{{ route('lobbies.getGameInfoSnake') }}',
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                    _token: '{{ csrf_token() }}', 
-                    lobby_id: lobbyId={{$lobby->id}}
-                    },
-                    success: function(response) {
-                        if(response.lobby.gameType=="tic-tac-toe"){
-                            exit();
-                        }
-                        lobbyHeader.innerHTML=response.lobby.name
-                        if(response.playerOne!=null && response.playerTwo!=null){
-                            console.log("ready to start")
-                            if(response.lobby.start==0){
-                                timerInterval = setInterval(gameLoop, speed);
-                                start==1
-                                clearInterval(preGameInterval)
-                            }
-                            playerIndicator.innerHTML= response.playerOne.name+" VS "+response.playerTwo.name;
-                            foodEaten1=response.playerOne.length
-                            foodEaten2=response.playerTwo.length
-                            lastKeyOne=response.playerOne.direction
-                            lastKeyTwo=response.playerTwo.direction
-                            playerOneId=response.playerOne.id;
-                            playerTwoId=response.playerTwo.id;
-                            if(response.playerOne.alive==false||response.playerTwo.alive==false){
-                                death()    
-                            }
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.log("bad get");
-                    }
-                
-            });
-        }
-
-       // preGameInterval = setInterval(getGameInfoSnake, 500);
-
-        function updateGameInfoSnake(){
-            $.ajax({
-                url: '{{ route('lobbies.updateGameInfoSnake') }}',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    lobbyID: {{$lobby->id}},
-                    foodX: foodX,
-                    foodY: foodY,
-                    playerOneDirection: lastKeyOne,
-                    playerTwoDirection: lastKeyTwo,
-                    playerOneLength: foodEaten1,
-                    playerTwoLength: foodEaten2,
-                    playerOneAlive: alive1,
-                    playerTwoAlive: alive2,
-                    start:start
-                },
-                success: function(response) {
-                    if (response.success) {
-                        console.log('good update',response); 
-                    } else {
-                        console.log('update error:', response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.log('Request failed:', error);
-                }
-            });
-        }
-*/
-        function exit(reason){
-            if(alreadyTriedToExit==false){
-                alreadyTriedToExit=true
-                $.ajax({
-                    url: '{{ route('lobbies.playerLeave') }}',
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}', 
-                        lobby_id: lobbyId={{$lobby->id}}
-                    },
-                    success: function(response) {
-                        if(reason==1){//1=="edit"
-                            window.location.href = '{{ route('lobbies.edit', $lobby->id) }}';
-                        }else{
-                            window.location.href = '/lobbies'; 
-                        }
-                    }
-                });
-            }
-        }
-        window.addEventListener('beforeunload', exit);
-
+slowButton.addEventListener("click", () => { speed = 700/*350*/ })
+let mediumButton = document.getElementById("medium")
+mediumButton.addEventListener("click", () => { speed = 250 })
+let fastButton = document.getElementById("fast")
+fastButton.addEventListener("click", () => { speed = 150 })
+let foodBox = document.getElementById("extraFood")
+foodBox.addEventListener("click", () => { fun = foodBox.checked })
 
 class cell {
     constructor(y, x) {
@@ -252,58 +162,40 @@ class cell {
 }
 
 function keyCheck(event) {
-    @auth
     inputKey = String(event.key).toLowerCase()
     if (inputKey == "w" || inputKey == "a" || inputKey == "d" || inputKey == "s" || inputKey == "arrowup" || inputKey == "arrowdown" || inputKey == "arrowleft" || inputKey == "arrowright") {
         if (inputKey == "w" || inputKey == "arrowup") {
-            if (lastKey != "arrowdown" && lastKey != "s") {
-                if({{Auth::id()}}==playerOneId){
-                    currentKey1 = inputKey
-                }else if({{Auth::id()}}==playerTwoId){
-                    currentKey2 = inputKey
-                }
+            if (lastKey1 != "arrowdown" && lastKey1 != "s") {
+                currentKey1 = inputKey
             }
         } else if (inputKey == "s" || inputKey == "arrowdown") {
-            if (lastKey != "arrowup" && lastKey != "w") {
-                if({{Auth::id()}}==playerOneId){
-                    currentKey1 = inputKey
-                }else if({{Auth::id()}}==playerTwoId){
-                    currentKey2 = inputKey
-                }
+            if (lastKey1 != "arrowup" && lastKey1 != "w") {
+                currentKey1 = inputKey
             }
         } else if (inputKey == "d" || inputKey == "arrowright") {
-            if (lastKey != "arrowleft" && lastKey != "a") {
-                if({{Auth::id()}}==playerOneId){
-                    currentKey1 = inputKey
-                }else if({{Auth::id()}}==playerTwoId){
-                    currentKey2 = inputKey
-                }
+            if (lastKey1 != "arrowleft" && lastKey1 != "a") {
+                currentKey1 = inputKey
             }
         } else {
-            if (lastKey != "arrowright" && lastKey != "d") {
-                if({{Auth::id()}}==playerOneId){
-                    currentKey1 = inputKey
-                }else if({{Auth::id()}}==playerTwoId){
-                    currentKey2 = inputKey
-                }
+            if (lastKey1 != "arrowright" && lastKey1 != "d") {
+                currentKey1 = inputKey
             }
         }
-        //currentKey=inputKey 
+        //currentKey1=inputKey 
     }
-    @endauth
 }
 function createField() {
-    alive1=true
-    alive2=true
+    dead1=false
+    dead2=false
     hungry1 = true
     hungry2 = true
-    currentKey1 = "arrowup"
-    currentKey2 = "arrowdown"
-    snake1Y = 4
+    currentKey1= "arrowup"
+    currentKey2= "arrowdown"
+    snake1Y = 6
     snake1X = 4
-    snake2Y = 6
+    snake2Y = 4
     snake2X = 6
-    foodEaten = 4
+    foodEaten1 = 4
     foodEaten2 = 4
     foodExists = false
     if (fieldExists == true) {
@@ -320,7 +212,7 @@ function createField() {
         }
     }
     fieldExists = true
-    fieldContainer.setAttribute("style", "background-color:var(--background);")
+    //fieldContainer.setAttribute("style", "background-color:var(--background);")
     timerInterval = setInterval(gameLoop, speed);
     for (let y = 0; y < heightInput; y++) {
         const row = [];
@@ -341,25 +233,20 @@ function createField() {
 }
 
 function gameLoop() {
-    //getGameInfoSnake();
-    console.log("start loop")
-    hungry = true
+    hungry1 = true
+    hungry2 = true
     if (foodExists == false) {
-        console.log("create food")
         do {
             randomX = Math.floor(Math.random() * widthInput);
             randomY = Math.floor(Math.random() * heightInput);
-        } while (field[randomY][randomX].visual.className == "cell snake");
-        @auth
-        if({{Auth::id()}}== playerOneId){
-            field[randomY][randomX].visual.className += " food"
-        }
-        @endauth
+        } while (field[randomY][randomX].visual.className == "cell snake1"||field[randomY][randomX].visual.className == "cell snake2");
+        field[randomY][randomX].visual.className += " food"
         foodExists = true
     }
 
-    lastKey = currentKey
-    switch (lastKeyOne) {
+    lastKey1 = currentKey1
+
+    switch (lastKey1) {
         case 'arrowup':
             snake1Y--
             break;
@@ -378,6 +265,7 @@ function gameLoop() {
         case 'a':
             snake1X--
             break;
+
         case 'arrowright':
             snake1X++
             break;
@@ -385,7 +273,10 @@ function gameLoop() {
             snake1X++
             break;
     }
-    switch (lastKeyTwo) {
+
+    
+    //lastKey2=currentKey2
+    switch (lastKey2) {
         case 'arrowup':
             snake2Y--
             break;
@@ -404,6 +295,7 @@ function gameLoop() {
         case 'a':
             snake2X--
             break;
+
         case 'arrowright':
             snake2X++
             break;
@@ -411,6 +303,7 @@ function gameLoop() {
             snake2X++
             break;
     }
+    lastKey2=currentKey1 // for testing
 
     if ((snake1X < widthInput && snake1X > -1) && (snake1Y < heightInput && snake1Y > -1) ) {
         if (field[snake1Y][snake1X].visual.className == "cell food") {
@@ -420,7 +313,7 @@ function gameLoop() {
             field[snake1Y][snake1X].visual.className = "cell snake1"
             field[snake1Y][snake1X].ticksLeft = foodEaten1 - 1
         }else if(field[snake1Y][snake1X].ticksLeft>1){
-            alive1=false
+            dead1=true
             death();
         }else {
             field[snake1Y][snake1X].visual.className += " snake1"
@@ -428,7 +321,7 @@ function gameLoop() {
         }
 
     } else {
-        alive1=false
+        dead1=true
         death()
     }
 
@@ -440,7 +333,7 @@ function gameLoop() {
             field[snake2Y][snake2X].visual.className = "cell snake2"
             field[snake2Y][snake2X].ticksLeft = foodEaten2 - 1
         }else if(field[snake2Y][snake2X].ticksLeft>1){
-            alive2=false
+            dead2=true
             death();
         }else {
             field[snake2Y][snake2X].visual.className += " snake2"
@@ -448,41 +341,44 @@ function gameLoop() {
         }
 
     } else {
-        alive2=false
+        dead2=true
         death()
     }
 
+
     for (let y = 0; y < field.length; y++) {
         for (let x = 0; x < field[y].length; x++) {
-            if (hungry == true) {
-                field[y][x].ticksLeft--
+            console.log(field[y][x].visual.className)
+            if (hungry1 == true) {
+                if(field[y][x].visual.className=="cell snake1"){
+                    field[y][x].ticksLeft--
+                }
+            }
+            if (hungry2 == true) {
+                if(field[y][x].visual.className=="cell snake2"){
+                    field[y][x].ticksLeft--
+                }
             }
             if (field[y][x].ticksLeft < 1 && field[y][x].visual.className != "cell food") {
                 field[y][x].visual.className = "cell"
             }
         }
     }
-    if({{Auth::id()}}==playerOneId || {{Auth::id()}}==playerTwoId) {
-        updateGameInfoSnake()
-    }
 }
 
 function death(){
     clearInterval(timerInterval)
     setTimeout(() => {
-        if(alive1==false && alive2==false){
+        if(dead1==true&&dead2==true){
             alert("tie")
-        }else if(alive1==false){
-            alert("player two won")
-        }else if(alive2==false){
-            alert("player one won")
+        }else if(dead1==true){
+            alert("player 2 wins")
+        }else{
+            alert("player 1 wins")
         }
-        start=0
-        //let preGameInterval = setInterval(getGameInfoSnake, 500);
-    }, 3000)
+        
+    }, 200);
 }
-
-
     </script>
 </body>
 </html>
