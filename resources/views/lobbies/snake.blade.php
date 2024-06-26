@@ -7,11 +7,11 @@
     <style>
 :root {
     --snake:rgb(0, 0, 0);
-    --snake1:rgb(0, 20, 148);
-    --snake2:rgb(154, 0, 0);
+    --snake1:rgb(0, 25, 187);
+    --snake2:rgb(185, 0, 0);
     --background: #43b103;
     --cell: #67cb09;
-    --food: hsl(0, 59%, 41%);
+    --food: hsl(47, 100%, 50%);
     --body: hsl(0, 0%, 100%);
 }
 body {
@@ -129,6 +129,15 @@ button{
     flex-direction: column;
     align-items: center;
 }
+#playerOneIndicator{
+            color: var(--snake1)
+        }
+        #playerTwoIndicator{
+            color: var(--snake2)
+        }
+        #players{
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -142,8 +151,8 @@ button{
             @endif     
         </div>
         <h1 id="lobbyHeader"></h1>
-        <h2 id="playerIndicatort"> </h2>
-        <h2 id="resultIndicatort"> </h2>
+        <div id="players"><h2 id="playerOneIndicator"></h2><h2>&nbsp;VS&nbsp;</h2><h2 id="playerTwoIndicator"></h2></div>
+        <h2 id="resultIndicatort">&nbsp;</h2>
 
         <div id="startingScreen">
             <div id="fieldContainer">
@@ -178,56 +187,46 @@ const field = [];
 getGameInfoSnake(true)
 function synchronise(){
     @auth
-    setTimeout(()=>{
         function waitForP2(){
             getGameInfoSnake(true)
-            if(savedPlayerTwo!=null && savedPlayerTwo.status=="ready"){
-                console.log("P2 joined and ready")
-                clearInterval(syncInterval)
-                setTimeout(()=>{
-                    console.log("Get ready")
+            if(savedPlayerTwo.status=="ready"){
+                updateStatus("ready");
+                if(savedPlayerOne.status=="ready"){
+                    clearInterval(syncInterval)
                     setTimeout(()=>{
-                        console.log("Start")
+                    console.log("Get ready")
+                    resultIndicatort.innerHTML="Get ready!"
+                    setTimeout(()=>{
+                        resultIndicatort.innerHTML="Start !"
+                        setTimeout(()=>{resultIndicatort.innerHTML="&nbsp;"},2000)
                         createField()
-                    },3000)
-                },10)
+                    },2000)
+                    },10)
+                }
+                
             }
         }
-        if({{Auth::id()}}==savedPlayerOne.id){
-            syncInterval = setInterval(waitForP2, 70);
-        }else if({{Auth::id()}}==savedPlayerTwo.id && savedPlayerOne!=null){
-            updateP2Status("ready");
+    setTimeout(()=>{
+        syncInterval = setInterval(waitForP2, 50);
+        if({{Auth::id()}}==savedPlayerTwo.id && savedPlayerOne!=null){
+            updateStatus("ready");
             console.log("P2 ready")
-            setTimeout(()=>{
-                console.log("Start")
-                updateP2Status("in game");
-                createField()
-            },3000)
         }
-    },200)
+    },1000)
     @endauth
 }
-function updateP2Status(status){
+function updateStatus(status){
     $.ajax({
-        url: '{{ route('lobbies.updateP2Status') }}',
+        url: '{{ route('lobbies.updateStatus') }}',
         type: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
             lobbyID: {{$lobby->id}},
             status:status
-        },
-        success: function(response) {
-            if (response.success) {
-                console.log('good update',response); 
-            } else {
-                console.log('update error:', response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.log('Request failed:', error);
         }
     });
 }
+
 
 
 synchronise()
@@ -416,14 +415,15 @@ function gameLoop() {
     }, 100);
 }, 100);
 }
-function getGameInfoSnake(sync){
+function getGameInfoSnake(sync=false){
     $.ajax({
             url: '{{ route('lobbies.getGameInfoSnake') }}',
             type: 'POST',
             dataType: 'json',
             data: {
             _token: '{{ csrf_token() }}', 
-            lobby_id: lobbyId={{$lobby->id}}
+            lobby_id: lobbyId={{$lobby->id}},
+            sync: sync
             },
             success: function(response) {
                 //console.log("let me see",response)
@@ -448,8 +448,9 @@ function getGameInfoSnake(sync){
                 death("left")
             }
             if(sync!=true){
-                
-            playerIndicatort.innerHTML=savedPlayerOne.name+" VS "+savedPlayerTwo.name;
+                updateStatus("in game");
+                playerOneIndicator.innerHTML=response.playerOne.name
+                playerTwoIndicator.innerHTML=response.playerTwo.name
                 lastKey1 = response.playerOne.direction
                 switch (lastKey1) {
                 case 'arrowup':
@@ -509,7 +510,7 @@ function getGameInfoSnake(sync){
             }
             },
             error: function(xhr, status, error) {
-                console.log("bad get");
+                //console.log("bad get");
             }
         
     });
@@ -525,13 +526,13 @@ function updateSnake1(){
         },
         success: function(response) {
             if (response.success) {
-                console.log('good update',response); 
+                //console.log('good update',response); 
             } else {
-                console.log('update error:', response.message);
+                //console.log('update error:', response.message);
             }
         },
         error: function(xhr, status, error) {
-            console.log('Request failed:', error);
+            //console.log('Request failed:', error);
         }
     });
 }
@@ -546,13 +547,13 @@ function updateSnake2(){
         },
         success: function(response) {
             if (response.success) {
-                console.log('good update',response); 
+                //console.log('good update',response); 
             } else {
-                console.log('update error:', response.message);
+                //console.log('update error:', response.message);
             }
         },
         error: function(xhr, status, error) {
-            console.log('Request failed:', error);
+            //console.log('Request failed:', error);
         }
     });
 }
@@ -564,18 +565,17 @@ function death(reason){
         synchronise();
     }else if(dead1==true&&dead2==true){
         clearInterval(timerInterval)
-        resultIndicatort.innerHTML=="Tie !"
+        resultIndicatort.innerHTML="Tie!"
         synchronise();
     }else if(dead1==true){
         clearInterval(timerInterval)
-        resultIndicatort.innerHTML==savedPlayerTwo.name+" wins !"
+        resultIndicatort.innerHTML=savedPlayerTwo.name+" wins !"
         synchronise();
     }else if(dead2==true){
         clearInterval(timerInterval)
-        resultIndicatort.innerHTML==savedPlayerOne.name+" wins !"
+        resultIndicatort.innerHTML=savedPlayerOne.name+" wins !"
         synchronise();
     }
-    //setTimeout(() => {resultIndicatort.innerHTML=""}, 3000);
     
 }
 

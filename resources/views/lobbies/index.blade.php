@@ -16,23 +16,25 @@
         font-family: Arial, Helvetica, sans-serif;
     }
     h2{
+        color: rgb(61, 61, 61);
         font-size: 20px;
         font-family: Arial, Helvetica, sans-serif;
     }
     p,th,td,button{
+        color: rgb(42, 42, 42);
         font-family: Arial, Helvetica, sans-serif;
         font-size: 15px;
     }
     button{
-        background-color: rgb(248, 248, 248);
-        border-radius: 6px;
-        border-style: solid;
-        border-color: black;
-        padding: 4px;
+        color: white;
+        background-color: #2f71eb;
+        border-radius: 7px;
+        border-style: none;
+        padding: 6px;
         border-width: 1px;
     }
     button:hover{
-        background-color: rgb(226, 226, 226);
+        background-color: #235ecb;
     }
     body{
         margin:0px;

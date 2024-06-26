@@ -68,12 +68,6 @@ class LobbyController extends Controller
 
         
         $currentUser=User::find(auth()->id()); 
-        if ($currentUser) {
-            if($currentUser->id==$playerOne->id||$currentUser->id==$playerTwo->id){
-                $currentUser->status="in game";
-                $currentUser->save();
-            }
-        }
 
         if($playerOne==$playerTwo){ //player duplicate check
             $lobby->playerTwo=NULL;
@@ -117,17 +111,10 @@ class LobbyController extends Controller
         return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
     }
 
-    public function updateP2Status(Request $request){
-        $lobby = lobbies::find($request->input('lobbyID'));
-        if (!$lobby) {
-            return response()->json(['error' => 'Lobby not found'], 404);
-        }
-        $playerTwo = User::find($lobby->playerTwo);
-        if (!$playerTwo) {
-            return response()->json(['error' => 'Player One not found'], 404);
-        }
-        $playerTwo->status=$request->input('status');
-        $playerTwo->save();
+    public function updateStatus(Request $request){
+        $currentUser=User::find(auth()->id());
+        $currentUser->status=$request->input('status');
+        $currentUser->save();
         return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
     }
 

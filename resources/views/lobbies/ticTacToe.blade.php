@@ -78,16 +78,16 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        
-        #lang{
-            align-self: flex-end;
+        }
+        #playerOneIndicator{
+            color: rgb(205, 52, 52)
+        }
+        #playerTwoIndicator{
+            color: rgb(44, 44, 189)
+        }
+        #players{
             display: flex;
-            flex-direction: row;
         }
-        #enForm{
-            margin-left: 10px
-        }
-    }
     </style>
 </head>
 <body>
@@ -101,8 +101,8 @@
             @endif     
         </div>
         <h1 id="lobbyHeader">Tic-Tac-Toe</h1>
-        <h2 id="playerIndicator"></h2>
-        <h2 id="scoreIndicator">game score:</h2>
+        <div id="players"><h2 id="playerOneIndicator"></h2><h2>&nbsp;VS&nbsp;</h2><h2 id="playerTwoIndicator"></h2></div>
+        
         <div class="gridContainer">
             <div class="box" id="00"></div>
             <div class="box" id="10"></div>
@@ -114,9 +114,8 @@
             <div class="box" id="12"></div>
             <div class="box" id="22"></div>
         </div>
-        <h2 id="turnIndicator">
-        </h2>
-        <h3 id="results"></h3>
+        <h2 id="turnIndicator">&nbsp;</h2>
+        <h3 id="results">&nbsp;</h3>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -161,7 +160,8 @@
                         turn=response.lobby.turn
                         lobbyHeader.innerHTML=response.lobby.name
                         if(response.playerOne!=null && response.playerTwo!=null){
-                            playerIndicator.innerHTML= response.playerOne.name+" VS "+response.playerTwo.name;
+                            playerOneIndicator.innerHTML=response.playerOne.name
+                            playerTwoIndicator.innerHTML=response.playerTwo.name
                             if(response.lobby.turn==1){
                                 turnIndicator.innerHTML=response.playerOne.name+" turns"
                             }else{
@@ -422,7 +422,7 @@
             }
             @auth
             @if(Auth::id()==$lobby->creator)
-            theEditButton.innerHTML="rediģēt"
+            editButton.innerHTML="rediģēt"
             @endif
             @endauth
         }
