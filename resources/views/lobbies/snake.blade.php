@@ -212,7 +212,7 @@ function synchronise(){
     @auth
         
     setTimeout(()=>{
-        syncInterval = setInterval(waitForP2, 1000);//50
+        syncInterval = setInterval(waitForP2, 50);
         if({{Auth::id()}}==savedPlayerTwo.id && savedPlayerOne!=null){
             updateStatus("ready");
             console.log("P2 ready")
@@ -589,19 +589,19 @@ function death(reason){
     if(reason=="left"){
         clearInterval(timerInterval)
         alert("opponent left the game")
-        synchronise();
+        setTimeout(synchronise,2000)
     }else if(dead1==true&&dead2==true){
         clearInterval(timerInterval)
         resultIndicatort.innerHTML="Tie!"
-        synchronise();
+        setTimeout(synchronise,2000)
     }else if(dead1==true){
         clearInterval(timerInterval)
         resultIndicatort.innerHTML=savedPlayerTwo.name+" wins !"
-        synchronise();
+        setTimeout(synchronise,2000)
     }else if(dead2==true){
         clearInterval(timerInterval)
         resultIndicatort.innerHTML=savedPlayerOne.name+" wins !"
-        synchronise();
+        setTimeout(synchronise,2000)
     }
     
 }
