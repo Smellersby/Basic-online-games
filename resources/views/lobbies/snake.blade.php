@@ -35,6 +35,7 @@ h1{
     font-family: Arial, Helvetica, sans-serif;
 }
 h2{
+    color: black;
     font-size: 18px;
     font-family: Arial, Helvetica, sans-serif;
 }
@@ -76,7 +77,7 @@ h3{
 #startingScreen{
     padding: 30px;
     width: fit-content;
-    background-color: var(--background);
+    background-color: white;
     border-radius: 10px;
     margin-top: 30px;
     margin-bottom: 50px;
@@ -134,17 +135,17 @@ button{
     <div id="mainContainer">
         <div id="buttonDiv">
             @if($lobby->playerOne==Auth::id()||$lobby->playerTwo==Auth::id())
-            <button onclick="exit()">Leave game</button>
+            <button id="exitButton" onclick="exit()">Leave game</button>
             @endif
             @if($lobby->creator==Auth::id())
-            <button onclick=exit(1)>Edit</button>
+            <button id="theEditButton" onclick=exit(1)>Edit</button>
             @endif     
         </div>
         <h1 id="lobbyHeader"></h1>
+        <h2 id="playerIndicatort"> </h2>
+        <h2 id="resultIndicatort"> </h2>
+
         <div id="startingScreen">
-            
-            <h1 id="playerIndicator"></h1>
-            <h1 id="resultIndicator"></h1>
             <div id="fieldContainer">
             </div>
         </div>
@@ -299,9 +300,9 @@ function createField() {
     foodEaten1 = 4
     foodEaten2 = 4
     foodExists = false
+    startingScreen.style.backgroundColor="var(--background)"
     if (fieldExists == true) {
         clearInterval(timerInterval)
-
         while (fieldContainer.hasChildNodes()) {
             fieldContainer.removeChild(fieldContainer.firstChild);
         }
@@ -365,7 +366,6 @@ function gameLoop() {
                 field[snake1Y][snake1X].ticksLeft = foodEaten1 - 1
             }else if(field[snake1Y][snake1X].ticksLeft>1){
                 dead1=true
-                death();
             }else {
                 field[snake1Y][snake1X].visual.className += " snake1"
                 field[snake1Y][snake1X].ticksLeft = foodEaten1
@@ -373,7 +373,6 @@ function gameLoop() {
 
         } else {
             dead1=true
-            death()
         }
 
         if ((snake2X < widthInput && snake2X > -1) && (snake2Y < heightInput && snake2Y > -1) ) {
@@ -385,7 +384,6 @@ function gameLoop() {
                 field[snake2Y][snake2X].ticksLeft = foodEaten2 - 1
             }else if(field[snake2Y][snake2X].ticksLeft>1){
                 dead2=true
-                death();
             }else {
                 field[snake2Y][snake2X].visual.className += " snake2"
                 field[snake2Y][snake2X].ticksLeft = foodEaten2
@@ -393,9 +391,9 @@ function gameLoop() {
 
         } else {
             dead2=true
-            death()
         }
 
+        death()
 
         for (let y = 0; y < field.length; y++) {
             for (let x = 0; x < field[y].length; x++) {
@@ -450,6 +448,8 @@ function getGameInfoSnake(sync){
                 death("left")
             }
             if(sync!=true){
+                
+            playerIndicatort.innerHTML=savedPlayerOne.name+" VS "+savedPlayerTwo.name;
                 lastKey1 = response.playerOne.direction
                 switch (lastKey1) {
                 case 'arrowup':
@@ -558,18 +558,25 @@ function updateSnake2(){
 }
 
 function death(reason){
-    clearInterval(timerInterval)
     if(reason=="left"){
+        clearInterval(timerInterval)
         alert("opponent left the game")
+        synchronise();
     }else if(dead1==true&&dead2==true){
-        resultIndicator.innerHTML=="Tie !"
+        clearInterval(timerInterval)
+        resultIndicatort.innerHTML=="Tie !"
+        synchronise();
     }else if(dead1==true){
-        resultIndicator.innerHTML==savedPlayerTwo.name+" wins !"
-    }else{
-        resultIndicator.innerHTML==savedPlayerOne.name+" wins !"
+        clearInterval(timerInterval)
+        resultIndicatort.innerHTML==savedPlayerTwo.name+" wins !"
+        synchronise();
+    }else if(dead2==true){
+        clearInterval(timerInterval)
+        resultIndicatort.innerHTML==savedPlayerOne.name+" wins !"
+        synchronise();
     }
-    setTimeout(() => {resultIndicator.innerHTML=="Tie"}, 3000);
-    synchronise();
+    //setTimeout(() => {resultIndicatort.innerHTML=""}, 3000);
+    
 }
 
 
@@ -596,6 +603,18 @@ function exit(reason){
             }
         }
         window.addEventListener('beforeunload', exit);
+    
+        const language = sessionStorage.getItem('language');
+        if(language=="lv"){
+            if(exitButton){
+            exitButton.innerHTML="atgriezties"
+            }
+            @auth
+            @if(Auth::id()==$lobby->creator)
+            theEditButton.innerHTML="rediģēt"
+            @endif
+            @endauth
+        }
     </script>
 </body>
 </html>

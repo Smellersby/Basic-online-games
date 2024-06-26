@@ -169,6 +169,7 @@ class LobbyController extends Controller
         if(lobbies::where('creator',auth()->id())->first()){
             abort(403, 'You are not allowed to have more than one lobby');
         }
+        App::setLocale($request->input('selectLanguage'));
         $users = User::all()->sortByDesc('created_at');
         return view('lobbies.create', compact('users'));
     }
@@ -204,9 +205,9 @@ class LobbyController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request,string $id)
     {
-        
+        App::setLocale($request->input('selectLanguage'));
         $lobby = lobbies::find($id);
         $users = User::all();
         $fields = fields::all();
@@ -228,13 +229,13 @@ class LobbyController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request,string $id)
     {
         $lobby = lobbies::find($id);
         if (auth()->id()!=$lobby->creator && User::find(auth()->id())->role!="admin") {
             abort(403,'You are not the author');
         }
-        
+        App::setLocale($request->input('selectLanguage'));
         return view('lobbies.edit', compact('lobby'));
 
     }

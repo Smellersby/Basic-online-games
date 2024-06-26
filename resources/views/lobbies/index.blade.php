@@ -11,11 +11,12 @@
         align-self: flex-end;
     }
     h1{
+        color: #2f71eb;
         font-size: 36px;
         font-family: Arial, Helvetica, sans-serif;
     }
     h2{
-        font-size: 18px;
+        font-size: 20px;
         font-family: Arial, Helvetica, sans-serif;
     }
     p,th,td,button{
@@ -40,8 +41,11 @@
     }
     #mainContainer{
         width: 1000px;
+        margin-top: 10px;
         padding: 10px;
-        background-color: rgb(234, 236, 237);
+        background-color: rgb(202 224 255);
+        border-radius:15px;
+        padding-bottom: 30px; 
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -74,45 +78,51 @@
         <div id="accountManagment">
             
             @auth 
-            <p>logged in as {{ $users[Auth::id()-1]->name }}</p>
-            <a href="{{ url('/dashboard') }}"><button>dashboard</button></a>
+            <p>{{__('messages.logged')}}{{ $users[Auth::id()-1]->name }}</p>
+            <a href="{{ url('/dashboard') }}"><button>{{__('messages.dashboard')}}</button></a>
             @endauth
             
             @guest
-            <a href="{{ url('/login') }}"><button>log in</button></a>
-            <a href="{{ url('/register') }}"><button>register</button></a>
+            <a href="{{ url('/login') }}"><button>{{__('messages.logIn')}}</button></a>
+            <a href="{{ url('/register') }}"><button>{{__('messages.register')}}</button></a>
             @endguest
-            <form method="GET" action="{{ route('lobbies.index')}}">
+            <form id="lvForm" method="GET" action="{{ route('lobbies.index')}}">
                 @csrf
-                @method('DELETE')
+                @method('GET')
                 <input type="hidden" id="selectLanguage" name="selectLanguage" value="lv">
                 <button id="lvButton" type="submit">LV</button>
             </form>
+            <form id="enForm" method="GET" action="{{ route('lobbies.index')}}">
+                @csrf
+                @method('GET')
+                <input type="hidden" id="selectLanguage" name="selectLanguage" value="en">
+                <button id="enButton" type="submit">EN</button>
+            </form>
             
         </div>
-        <h1>{{__('messages.welcome')}}</h1>
+        <h1 id="welcome">{{__('messages.welcome')}}</h1>
         <div id="listContainer">
-            <h2>List of lobbies</h2>
+            <h2>{{__('messages.listHeader')}}</h2>
             @auth
             <form id="createForm" method="POST" action="{{ route('lobbies.create') }}">
                 @csrf
                 @method('GET')
-            <button type="submit">create lobby</button>
+            <button type="submit">{{__('messages.create')}}</button>
             </form>
             @endauth
             <table>
                 <tr>
-                    <th>Title</th>
-                    <th>Game</th>
-                    <th>Creator</th>
-                    <th>Player one</th>
-                    <th>Player two</th>
+                    <th>{{__('messages.title')}}</th>
+                    <th>{{__('messages.game')}}</th>
+                    <th>{{__('messages.creator')}}</th>
+                    <th>{{__('messages.P1')}}</th>
+                    <th>{{__('messages.P2')}}</th>
                     <th><!--buttons--></th>
                 </tr>
                 @foreach ($lobbies as $lobby)
                 <tr>
                     <td>{{ $lobby->name }}</td>
-                    <td>{{$lobby->gameType}}</td>
+                    <td>@if($lobby->gameType=="snake"){{__('messages.snake')}}@else{{__('messages.ticTac')}}@endif</td>
                     <td>{{$users[$lobby->creator-1]->name }}</td>
                     <td>
                         @if ($lobby->playerOne!=null)
@@ -126,26 +136,26 @@
                     </td>
                     <td><!--buttons-->
                         @if ($lobby->playerOne!=NULL && $lobby->playerTwo!=NULL)
-                        <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
+                        <form id="specForm" method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
                             @csrf
                             @method('GET')
-                            <button type="submit">spectate</button>
+                            <button type="submit">{{__('messages.spectate')}}</button>
                         </form>
                         @endif
                         
                         @auth
                         @if ($lobby->playerOne==NULL || $lobby->playerTwo==NULL)
-                            <form method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
+                            <form id="playForm" method="POST" action="{{ route('lobbies.show', $lobby->id) }}">
                                 @csrf
                                 @method('GET')
-                                <button type="submit">play</button>
+                                <button type="submit">{{__('messages.play')}}</button>
                             </form>
                         @endif
 
                         @if ($lobby->creator==Auth::id()|| $users[Auth::id()-1]->role=="admin")
                             <form method="GET" action="{{ route('lobbies.edit', $lobby->id) }}">
                                 @csrf
-                                <button type="submit">edit</button>
+                                <button type="submit">{{__('messages.edit')}}</button>
                             </form>
                         @endif
                         
@@ -153,7 +163,7 @@
                             <form method="POST" action="{{ route('lobbies.destroy', $lobby->id)}}">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit">delete</button>
+                                <button type="submit">{{__('messages.delete')}}</button>
                             </form>
                         @endif
                         @endauth
@@ -165,10 +175,23 @@
     </div>
     <script>
         lvButton.addEventListener('mousedown',()=>{
-            localStorage.setItem('language', 'lv');
-            let language = localStorage.getItem('language');
+            sessionStorage.setItem('language', 'lv');
+            let language = sessionStorage.getItem('language');
             console.log(language); 
         })
+
+        enButton.addEventListener('mousedown',()=>{
+            sessionStorage.setItem('language', 'en');
+            let language = sessionStorage.getItem('language');
+            console.log(language); 
+        })
+        const language = sessionStorage.getItem('language');
+        console.log(language);
+        if(language=="lv" && welcome.innerHTML!="Laipni lūdzam Basic-online-games"){
+            lvForm.submit()
+        }else if(language=="en" && welcome.innerHTML!="Welcome to Basic-online-games"){
+            enForm.submit()
+        }
 
         function exit(){
             $.ajax({

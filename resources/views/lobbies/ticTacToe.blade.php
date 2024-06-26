@@ -78,6 +78,15 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        
+        #lang{
+            align-self: flex-end;
+            display: flex;
+            flex-direction: row;
+        }
+        #enForm{
+            margin-left: 10px
+        }
     }
     </style>
 </head>
@@ -85,10 +94,10 @@
     <div id="mainContainer">
         <div id="buttonDiv">
             @if($lobby->playerOne==Auth::id()||$lobby->playerTwo==Auth::id())
-            <button onclick="exit()">Leave game</button>
+            <button id="exitButton" onclick="exit()">{{__('messages.leave')}}</button>
             @endif
             @if($lobby->creator==Auth::id())
-            <button onclick=exit(1)>Edit</button>
+            <button id="editButton" onclick=exit(1)>{{__('messages.edit')}}</button>
             @endif     
         </div>
         <h1 id="lobbyHeader">Tic-Tac-Toe</h1>
@@ -405,6 +414,18 @@
             clearField()
         }
         fieldListen()
+
+        const language = sessionStorage.getItem('language');
+        if(language=="lv"){
+            if(exitButton){
+            exitButton.innerHTML="atgriezties"
+            }
+            @auth
+            @if(Auth::id()==$lobby->creator)
+            theEditButton.innerHTML="rediģēt"
+            @endif
+            @endauth
+        }
     </script>
 </body>
 </html>
