@@ -130,14 +130,14 @@ button{
     align-items: center;
 }
 #playerOneIndicator{
-            color: var(--snake1)
-        }
-        #playerTwoIndicator{
-            color: var(--snake2)
-        }
-        #players{
-            display: flex;
-        }
+    color: var(--snake1)
+}
+#playerTwoIndicator{
+    color: var(--snake2)
+}
+.players{
+    display: flex;
+}
     </style>
 </head>
 <body>
@@ -151,7 +151,8 @@ button{
             @endif     
         </div>
         <h1 id="lobbyHeader"></h1>
-        <div id="players"><h2 id="playerOneIndicator"></h2><h2>&nbsp;VS&nbsp;</h2><h2 id="playerTwoIndicator"></h2></div>
+        <div class="players"><h2 id="playerOneIndicator"></h2><h2 id="vs" >&nbsp;VS&nbsp;</h2><h2 id="playerTwoIndicator"></h2></div>
+        <div class="players"><h2 id="playerOneScore">0</h2><h2>&nbsp;:&nbsp;</h2><h2 id="playerTwoScore">0</h2></div>
         <h2 id="resultIndicatort">&nbsp;</h2>
 
         <div id="startingScreen">
@@ -165,6 +166,7 @@ button{
 document.body.addEventListener("keydown", keyCheck)
 let fieldContainer = document.getElementById("fieldContainer")
 
+let gameStarted=false
 let inputKey //first, raw data
 let currentKey1,currentKey2 //checked value
 let lastKey1,lastKey2 //used value
@@ -187,23 +189,21 @@ const field = [];
 
 function waitForP2(){
             getGameInfoSnake(true)
-            console.log(savedPlayerOne)
-            console.log(savedPlayerTwo)
-            if(savedPlayerTwo.status=="ready"){
-                updateStatus("ready");
-                if(savedPlayerOne.status=="ready"){
-                    clearInterval(syncInterval)
-                    setTimeout(()=>{
-                    console.log("Get ready")
-                    resultIndicatort.innerHTML="Get ready!"
-                    setTimeout(()=>{
-                        resultIndicatort.innerHTML="Start !"
-                        setTimeout(()=>{resultIndicatort.innerHTML="&nbsp;"},2000)
-                        createField()
-                    },2000)
-                    },10)
+            if(savedPlayerTwo){
+                if(savedPlayerTwo.status=="ready"){
+                    updateStatus("ready");
+                    if(savedPlayerOne.status=="ready"){
+                        clearInterval(syncInterval)
+                        setTimeout(()=>{
+                        resultIndicatort.innerHTML="Get ready!"
+                        setTimeout(()=>{
+                            resultIndicatort.innerHTML="Start !"
+                            setTimeout(()=>{resultIndicatort.innerHTML="&nbsp;"},2000)
+                            createField()
+                        },2000)
+                        },10)
+                    }
                 }
-                
             }
         }
 
@@ -215,7 +215,6 @@ function synchronise(){
         syncInterval = setInterval(waitForP2, 50);
         if({{Auth::id()}}==savedPlayerTwo.id && savedPlayerOne!=null){
             updateStatus("ready");
-            console.log("P2 ready")
         }
     },1000)
     @endauth
@@ -290,7 +289,33 @@ function keyCheck(event) {
         //currentKey1=inputKey 
     }
 }
+
+function sendFood(){
+    console.log("I send food !")
+    $.ajax({
+        url: '{{ route('lobbies.sendFood') }}',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            lobbyID: {{$lobby->id}},
+            foodX:foodX,
+            foodY:foodY,
+        },
+        success: function(response) {
+            if (response.success) {
+                //console.log('good update',response); 
+            } else {
+                //console.log('update error:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            //console.log('Request failed:', error);
+        }
+    });
+}
+
 function createField() {
+    gameStarted=false
     dead1=false
     dead2=false
     hungry1 = true
@@ -338,6 +363,7 @@ function createField() {
 
 }
 function gameLoop() {
+    gameStarted=true
     @auth
     if({{Auth::id()}}==savedPlayerOne.id){
         updateSnake1()
@@ -348,15 +374,13 @@ function gameLoop() {
     setTimeout(() => { 
     getGameInfoSnake()
     setTimeout(() => { 
-
         hungry1 = true
         hungry2 = true
         @auth
-        if (foodExists == false && {{Auth::id()}}==savedPlayerOne) {
-            console.log("I cook!")
+        if (foodExists == false && {{Auth::id()}}==savedPlayerOne.id) {
             do {
-                randomX = Math.floor(Math.random()*(widthInput-1)+1);
-                randomY = Math.floor(Math.random()*(heightInput-1)+1);
+                randomX = Math.floor(Math.random()*(widthInput-2)+1);
+                randomY = Math.floor(Math.random()*(heightInput-2)+1);
                 snakeAround=false
                 for(x=-1;x<2;x++){
                     for(y=-1;y<2;y++){
@@ -368,11 +392,10 @@ function gameLoop() {
             } while (snakeAround==true);
             foodY=randomY;
             foodX=randomX;
+            sendFood()
             foodExists = true
         }
-        field[foodY][foodX].visual.className += " food"
         @endauth
-
         if ((snake1X < widthInput && snake1X > -1) && (snake1Y < heightInput && snake1Y > -1) ) {
             if (field[snake1Y][snake1X].visual.className == "cell food") {
                 hungry1 = false
@@ -433,10 +456,6 @@ function gameLoop() {
 }, 100);
 }
 function getGameInfoSnake(sync=false){
-    if(sync==true){
-        foodX=5
-        foodY=1
-    }
     $.ajax({
             url: '{{ route('lobbies.getGameInfoSnake') }}',
             type: 'POST',
@@ -444,8 +463,6 @@ function getGameInfoSnake(sync=false){
             data: {
             _token: '{{ csrf_token() }}', 
             lobby_id: lobbyId={{$lobby->id}},
-            foodX: foodX,
-            foodY: foodY,
             sync: sync
             },
             success: function(response) {
@@ -464,8 +481,14 @@ function getGameInfoSnake(sync=false){
                     speed=200
                     break;
                 }
+
             foodX=response.lobby.foodX
             foodY=response.lobby.foodY
+            if(foodX!=-1 && gameStarted==true){
+                if(field[foodX][foodY].visual.className=="cell"){
+                field[foodX][foodY].visual.className="cell food"
+                }
+            }
             lobbyHeader.innerHTML=response.lobby.name
             savedPlayerOne=response.playerOne
             savedPlayerTwo=response.playerTwo
@@ -592,15 +615,29 @@ function death(reason){
         setTimeout(synchronise,2000)
     }else if(dead1==true&&dead2==true){
         clearInterval(timerInterval)
-        resultIndicatort.innerHTML="Tie!"
+        if(language=="lv"){
+            resultIndicatort.innerHTML="Neizšķirts!"
+        }else{
+            resultIndicatort.innerHTML="Tie!"
+        }
         setTimeout(synchronise,2000)
     }else if(dead1==true){
         clearInterval(timerInterval)
-        resultIndicatort.innerHTML=savedPlayerTwo.name+" wins !"
+        playerTwoScore.innerHTML++
+        if(language=="lv"){
+            resultIndicatort.innerHTML=savedPlayerTwo.name+" uzvar !"
+        }else{
+            resultIndicatort.innerHTML=savedPlayerTwo.name+" wins !"
+        }
         setTimeout(synchronise,2000)
     }else if(dead2==true){
         clearInterval(timerInterval)
-        resultIndicatort.innerHTML=savedPlayerOne.name+" wins !"
+        playerOneScore.innerHTML++
+        if(language=="lv"){
+            resultIndicatort.innerHTML=savedPlayerOne.name+" uzvar !"
+        }else{
+            resultIndicatort.innerHTML=savedPlayerOne.name+" wins !"
+        }
         setTimeout(synchronise,2000)
     }
     
@@ -633,6 +670,7 @@ function exit(reason){
     
         const language = sessionStorage.getItem('language');
         if(language=="lv"){
+            vs.innerHTML="&nbsp;pret&nbsp;"
             if(exitButton){
             exitButton.innerHTML="atgriezties"
             }

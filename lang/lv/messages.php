@@ -3,7 +3,7 @@ return [
     //index blade
     'welcome' => 'Laipni lūdzam Basic-online-games',
     'listHeader' => 'Spēļu sarāksts',
-    'logged' => 'pieteicies kā ',
+    'logged' => 'jūs esat ',
     'logIn' => 'pieslēgties',
     'register' => 'reģistrēties',
     'dashboard' => 'infopaneļis',

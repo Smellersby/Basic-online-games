@@ -121,6 +121,14 @@ class LobbyController extends Controller
         return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
     }
 
+    public function sendFood(Request $request){
+        $lobby = lobbies::find($request->input('lobbyID'));
+        $lobby->foodX=$request->input('foodX');
+        $lobby->foodY=$request->input('foodY');
+        $lobby->save();
+        return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
+    }
+
     public function updateStatus(Request $request){
         $currentUser=User::find(auth()->id());
         $currentUser->status=$request->input('status');
@@ -251,6 +259,7 @@ class LobbyController extends Controller
         }
         $lobby->name = $request->name;
         $lobby->gameType = $request->gameType;
+        $lobby->speed = $request->speed;
         $lobby->save();
         return redirect()->route('lobbies.show', $id);
     }

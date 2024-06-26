@@ -85,7 +85,7 @@
         #playerTwoIndicator{
             color: rgb(44, 44, 189)
         }
-        #players{
+        .players{
             display: flex;
         }
     </style>
@@ -101,7 +101,8 @@
             @endif     
         </div>
         <h1 id="lobbyHeader">Tic-Tac-Toe</h1>
-        <div id="players"><h2 id="playerOneIndicator"></h2><h2>&nbsp;VS&nbsp;</h2><h2 id="playerTwoIndicator"></h2></div>
+        <div class="players"><h2 id="playerOneIndicator"></h2><h2 id="vs">&nbsp;VS&nbsp;</h2><h2 id="playerTwoIndicator"></h2></div>
+        <div class="players"><h2 id="playerOneScore">0</h2><h2>&nbsp;:&nbsp;</h2><h2 id="playerTwoScore">0</h2></div>
         
         <div class="gridContainer">
             <div class="box" id="00"></div>
@@ -163,9 +164,17 @@
                             playerOneIndicator.innerHTML=response.playerOne.name
                             playerTwoIndicator.innerHTML=response.playerTwo.name
                             if(response.lobby.turn==1){
-                                turnIndicator.innerHTML=response.playerOne.name+" turns"
+                                if(language=="lv"){
+                                    turnIndicator.innerHTML=response.playerOne.name+" gājiens"
+                                }else{
+                                    turnIndicator.innerHTML=response.playerOne.name+" turns"
+                                }
                             }else{
-                                turnIndicator.innerHTML=response.playerTwo.name+" turns"
+                                if(language=="lv"){
+                                    turnIndicator.innerHTML=response.playerTwo.name+" gājiens"
+                                }else{
+                                    turnIndicator.innerHTML=response.playerTwo.name+" turns"
+                                }
                             }
                             lockPlayer=1;
                             @auth
@@ -312,7 +321,11 @@
             }
             if(tieBool==true){
                 resultScreen.style.color="#000000"
-                resultScreen.innerHTML="Tie !"
+                if(language=="lv"){
+                    resultScreen.innerHTML="Neizšķirts !"
+                }else{
+                    resultScreen.innerHTML="Tie !"
+                }
                 clearField(true)
             }
 
@@ -375,10 +388,20 @@
         function victoryAlert(axis,coordinate){
             if(turn==1){
                 resultScreen.style.color="#0000ff"
-                resultScreen.innerHTML="O wins !"
+                playerTwoScore.innerHTML++
+                if(language=="lv"){
+                    resultScreen.innerHTML=playerTwoIndicator.innerHTML+" uzvar !"
+                }else{
+                    resultScreen.innerHTML=playerTwoIndicator.innerHTML+" wins !"
+                }
             }else{
                 resultScreen.style.color="#ff0000"
-                resultScreen.innerHTML="X wins !"
+                playerOneScore.innerHTML++
+                if(language=="lv"){
+                    resultScreen.innerHTML=playerOneIndicator.innerHTML+" uzvar !"
+            }else{
+                    resultScreen.innerHTML=playerOneIndicator.innerHTML+" wins !"
+                }
             }
             const line = document.createElement("div")
             line.id="line";
@@ -417,6 +440,7 @@
 
         const language = sessionStorage.getItem('language');
         if(language=="lv"){
+            vs.innerHTML="&nbsp;pret&nbsp;"
             if(exitButton){
             exitButton.innerHTML="atgriezties"
             }
@@ -426,6 +450,7 @@
             @endif
             @endauth
         }
+        
     </script>
 </body>
 </html>

@@ -15,6 +15,7 @@ Route::post('/lobbies/getGameInfoSnake', [LobbyController::class, 'getGameInfoSn
 Route::post('/lobbies/updateSnake1', [LobbyController::class, 'updateSnake1'])->name('lobbies.updateSnake1');
 Route::post('/lobbies/updateSnake2', [LobbyController::class, 'updateSnake2'])->name('lobbies.updateSnake2');
 Route::post('/lobbies/updateStatus', [LobbyController::class, 'updateStatus'])->name('lobbies.updateStatus');
+Route::post('/lobbies/sendFood', [LobbyController::class, 'sendFood'])->name('lobbies.sendFood');
 
 
 Route::get('language/{locale}', function ($locale) {
