@@ -93,7 +93,12 @@ class LobbyController extends Controller
         if (!$playerOne) {
             return response()->json(['error' => 'Player One not found'], 404);
         }
-        $playerOne->direction=$request->input('playerOneDirection');
+        if(!$request->input('playerOneDirection')){
+            $playerOne->direction='arrowup';
+        }else{
+            $playerOne->direction=$request->input('playerOneDirection');
+        }
+        
         $playerOne->save();
         return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
     }
@@ -106,7 +111,12 @@ class LobbyController extends Controller
         if (!$playerTwo) {
             return response()->json(['error' => 'Player two not found'], 404);
         }
-        $playerTwo->direction=$request->input('playerTwoDirection');
+        
+        if(!$request->input('playerTwoDirection')){
+            $playerTwo->direction='arrowdown';
+        }else{
+            $playerTwo->direction=$request->input('playerTwoDirection');
+        }
         $playerTwo->save();
         return response()->json(['success'=>true,'message' => 'Player direction updated successfully'], 200);
     }

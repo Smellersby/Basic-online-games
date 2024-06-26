@@ -174,6 +174,7 @@ let widthInput = 11
 let heightInput = 11
 let snake1Y,snake2Y
 let snake1X,snake2X
+let foodX,foodY
 let foodEaten1,foodEaten2
 let timerInterval
 let hungry1
@@ -184,11 +185,10 @@ let speed = 250
 let fun = false
 const field = [];
 
-getGameInfoSnake(true)
-function synchronise(){
-    @auth
-        function waitForP2(){
+function waitForP2(){
             getGameInfoSnake(true)
+            console.log(savedPlayerOne)
+            console.log(savedPlayerTwo)
             if(savedPlayerTwo.status=="ready"){
                 updateStatus("ready");
                 if(savedPlayerOne.status=="ready"){
@@ -206,8 +206,13 @@ function synchronise(){
                 
             }
         }
+
+getGameInfoSnake(true)
+function synchronise(){
+    @auth
+        
     setTimeout(()=>{
-        syncInterval = setInterval(waitForP2, 50);
+        syncInterval = setInterval(waitForP2, 1000);//50
         if({{Auth::id()}}==savedPlayerTwo.id && savedPlayerOne!=null){
             updateStatus("ready");
             console.log("P2 ready")
@@ -346,15 +351,27 @@ function gameLoop() {
 
         hungry1 = true
         hungry2 = true
-        if (foodExists == false) {
+        @auth
+        if (foodExists == false && {{Auth::id()}}==savedPlayerOne) {
+            console.log("I cook!")
             do {
-                randomX = Math.floor(Math.random() * widthInput);
-                randomY = Math.floor(Math.random() * heightInput);
-            } while (field[randomY][randomX].visual.className == "cell snake1"||field[randomY][randomX].visual.className == "cell snake2");
-            field[randomY][randomX].visual.className += " food"
+                randomX = Math.floor(Math.random()*(widthInput-1)+1);
+                randomY = Math.floor(Math.random()*(heightInput-1)+1);
+                snakeAround=false
+                for(x=-1;x<2;x++){
+                    for(y=-1;y<2;y++){
+                        if(field[randomY-y][randomX+x].visual.className!="cell"){
+                            snakeAround=true
+                        }
+                    }
+                }
+            } while (snakeAround==true);
+            foodY=randomY;
+            foodX=randomX;
             foodExists = true
         }
-
+        field[foodY][foodX].visual.className += " food"
+        @endauth
 
         if ((snake1X < widthInput && snake1X > -1) && (snake1Y < heightInput && snake1Y > -1) ) {
             if (field[snake1Y][snake1X].visual.className == "cell food") {
@@ -416,6 +433,10 @@ function gameLoop() {
 }, 100);
 }
 function getGameInfoSnake(sync=false){
+    if(sync==true){
+        foodX=5
+        foodY=1
+    }
     $.ajax({
             url: '{{ route('lobbies.getGameInfoSnake') }}',
             type: 'POST',
@@ -423,6 +444,8 @@ function getGameInfoSnake(sync=false){
             data: {
             _token: '{{ csrf_token() }}', 
             lobby_id: lobbyId={{$lobby->id}},
+            foodX: foodX,
+            foodY: foodY,
             sync: sync
             },
             success: function(response) {
@@ -441,6 +464,8 @@ function getGameInfoSnake(sync=false){
                     speed=200
                     break;
                 }
+            foodX=response.lobby.foodX
+            foodY=response.lobby.foodY
             lobbyHeader.innerHTML=response.lobby.name
             savedPlayerOne=response.playerOne
             savedPlayerTwo=response.playerTwo
@@ -451,6 +476,8 @@ function getGameInfoSnake(sync=false){
                 updateStatus("in game");
                 playerOneIndicator.innerHTML=response.playerOne.name
                 playerTwoIndicator.innerHTML=response.playerTwo.name
+
+
                 lastKey1 = response.playerOne.direction
                 switch (lastKey1) {
                 case 'arrowup':
